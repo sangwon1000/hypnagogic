@@ -52,6 +52,10 @@
     return v;
   }
   var fwd = mkVid(film('day2night', 6));
+  /* 정지 화면 한 장 — 필름이 안 풀리는 기기(iOS 저전력 모드 등)에서 방을 대신 세우고,
+     풀리는 기기에서는 첫 프레임이 올 때까지의 빈 순간을 메운다. 테마에 맞는 장으로. */
+  fwd.setAttribute('poster', 'assets/still_' +
+    (document.documentElement.dataset.theme === 'night' ? 'night' : 'day') + '.jpg?v=1');
   fwd.setAttribute('role', 'img');
   fwd.setAttribute('aria-label', 'a meditation room on a wooden deck, wrapped in a banyan tree');
   var rev = mkVid(film('night2day', 6));
@@ -497,8 +501,9 @@
     window.dispatchEvent(new Event('am-ready'));
   }
   function firstFrame() {
+    fwd.pause();                                     // 발길질이 아직 굴리고 있을 수 있다 — 세우고 자리를 잡는다
     if (themeName() === 'night') nightOpen(0);
-    else fireReady();
+    else { try { fwd.currentTime = 0; } catch (e) {} fireReady(); }   // 발길질이 밀어 둔 만큼 되감고 연다
   }
   /* Range 없는 서버·느린 회선에선 첫 seek이 0으로 클램프되거나 300ms 폴백이 먼저 울린다 —
      끝 프레임에 진짜 닿았는지 재고, 데이터가 더 오면 다시 감는다 */
@@ -538,8 +543,28 @@
     var p = fwd.play();
     if (p) p.catch(arrive);
   }
-  if (fwd.readyState >= 2) firstFrame();
-  else fwd.addEventListener('loadeddata', firstFrame, { once: true });
+  /* ── 관문을 여는 세 갈래 ──
+     iOS 사파리는 preload를 자주 무시한다. 데이터가 안 오면 loadeddata도 없고,
+     그것만 기다리는 관문은 영영 안 열린다 (실제로 아이폰에서 방이 안 떴다).
+     그래서 ① 재생을 한 번 걷어차 데이터를 부르고 ② metadata·시간제한도 관문을 열게 하고
+     ③ 그래도 필름이 안 풀리면 poster(정지 화면)가 방을 대신 세운다. */
+  var booted = false;
+  function boot() {
+    if (booted) return;
+    booted = true;
+    firstFrame();
+  }
+  if (fwd.readyState >= 2) boot();
+  else {
+    fwd.addEventListener('loadeddata', boot, { once: true });
+    fwd.addEventListener('loadedmetadata', boot, { once: true });  // iOS는 여기까지만 오는 일이 잦다
+    setTimeout(boot, 3000);                                        // 그마저 없으면 시간이 연다
+  }
+  /* 데이터 호출용 발길질 — muted+playsinline이라 iOS도 허용한다(저전력 모드면 거절, 그땐 poster가 받는다) */
+  (function kick() {
+    var p = fwd.play();
+    if (p && p.then) p.then(function () { fwd.pause(); }, function () {});
+  })();
   fwd.addEventListener('error', fireReady);       // 필름이 없어도 방문은 이어진다 — 마당색 위에서
 
   /* ── session.js가 빌리는 몸 — 3D 시절과 같은 이름들 ── */
