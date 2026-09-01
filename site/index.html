@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hypnagogic</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<script>(function(){try{localStorage.removeItem('am-theme')}catch(e){}
+function clock(){var h=new Date().getHours();return(h>=6&&h<19)?'day':'night'}
+function apply(){var ov=null;try{ov=localStorage.getItem('am-theme-override')}catch(e){}
+var c=clock();if(ov===c){try{localStorage.removeItem('am-theme-override')}catch(e){}ov=null}
+document.documentElement.dataset.theme=ov||c}
+apply();addEventListener('storage',function(e){if(e.key==='am-theme-override')apply()});setInterval(apply,60000)})()</script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=DM+Mono:wght@300;400;500&amp;family=DM+Sans:wght@300;400;500&amp;display=swap">
+<link rel="stylesheet" href="assets/style.css?v=21">
+<style>
+  html, body { height: 100%; overflow: hidden; }
+  /* 마당 — 4K 스틸의 backdrop 핑크와 한 몸 (렌더 실측 #E6CBC4) */
+  body { background: #e6cbc4; }
+  [data-theme="night"] body { background: var(--paper); }
+
+  /* 로딩 — 섬이 다 지어질 때까지 한지 한 장 */
+  .load { position: fixed; inset: 0; z-index: 5; background: #e6cbc4;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    transition: opacity 0.7s ease, background 0.5s ease; }
+  [data-theme="night"] .load { background: var(--paper); }
+  .load.out { opacity: 0; pointer-events: none; }
+  .load .l-txt { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: var(--ink2); }
+  .load .l-rail { width: 200px; height: 1px; background: var(--hair); }
+  .load .l-rail i { display: block; height: 100%; background: var(--seal); transform-origin: left; transform: scaleX(0); }
+  .load .l-pct { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--ink2); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<div class="scene" aria-label="the room — every object does one thing"></div>
+
+<div class="load" id="amLoad" role="status" aria-label="loading the room">
+  <span class="l-txt">opening the room</span>
+  <span class="l-rail"><i id="amLoadFill"></i></span>
+  <span class="l-pct" id="amLoadPct">0%</span>
+</div>
+<script>(function(){
+  var box=document.getElementById('amLoad'),pct=document.getElementById('amLoadPct'),fill=document.getElementById('amLoadFill');
+  var t0=Date.now(),target=12,prog=0,done=false;
+  /* 진짜 신호로 차오른다: 페이지 로드 86 → 씬 첫 프레임(am-ready) 100. 나머지는 숨 고르기 */
+  addEventListener('load',function(){target=Math.max(target,86)});
+  addEventListener('am-ready',function(){target=100});
+  if(document.documentElement.dataset.amReady)target=100;
+  setTimeout(function(){target=Math.max(target,68)},800);
+  setTimeout(function(){target=100},8000); /* 안전핀 — 회선이 어떻든 마당은 열린다 */
+  var iv=setInterval(function(){
+    prog=Math.min(target,prog+(target-prog)*0.14+0.15);
+    pct.textContent=Math.floor(prog)+'%';
+    fill.style.transform='scaleX('+(prog/100)+')';
+    if(prog>99.4&&target===100&&Date.now()-t0>850&&!done){
+      done=true;clearInterval(iv);
+      pct.textContent='100%';fill.style.transform='scaleX(1)';
+      setTimeout(function(){box.classList.add('out')},200);
+      setTimeout(function(){box.remove()},1150);
+    }
+  },50);
+})()</script>
+
+<script src="assets/ambient.js?v=5"></script>
+<script src="assets/room2d.js?v=15" defer></script>
+<script src="assets/session.js?v=8" defer></script>
+<script src="assets/vendor/supabase-2.js" defer></script>
+<script src="assets/auth.js?v=1" defer></script>
+</body>
+</html>

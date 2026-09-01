@@ -1,0 +1,456 @@
+/* ── Meditation room · 프로토타입 v0 ─────────────────────────
+   낮 = 한지, 밤 = 먹지. 주사(朱砂)는 낙관처럼 한 번.
+   본편(Astro)에서는 폰트 셀프호스트 + 한글 서브셋으로 교체.
+   여기엔 지금 쓰는 것만 산다 — 옛 마당(2D)·지운 페이지들의 스타일은 git 히스토리에. */
+
+@font-face {
+  font-family: 'MaruBuri';
+  src: url(https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Regular.woff2) format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'MaruBuri';
+  src: url(https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-SemiBold.woff2) format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'MaruBuri';
+  src: url(https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Bold.woff2) format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --paper: #F5F1E8;
+  --ink: #29241B;
+  --ink2: #6F675A;
+  --hair: rgba(41, 36, 27, 0.18);
+  --hair-soft: rgba(41, 36, 27, 0.09);
+  --seal: #B8371E;
+  --seal-t: #F7F1E6;
+
+  --serif: 'MaruBuri', 'AppleMyungjo', 'Noto Serif KR', Georgia, serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+[data-theme="night"] {
+  --paper: #161510;
+  --ink: #E5DFD0;
+  --ink2: #97907E;
+  --hair: rgba(229, 223, 208, 0.20);
+  --hair-soft: rgba(229, 223, 208, 0.09);
+  --seal: #C94D2F;
+  --seal-t: #F7F1E6;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 16.5px;
+  line-height: 1.9;
+  transition: background 0.5s ease, color 0.5s ease;
+}
+/* 한지 결 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--hair); }
+a:hover { text-decoration-color: var(--seal); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--seal); outline-offset: 3px; border-radius: 1px; }
+::selection { background: color-mix(in srgb, var(--seal) 22%, transparent); }
+
+.wrap { max-width: 680px; margin: 0 auto; padding: 0 24px; }
+
+/* ── 머리 ── */
+.site-head {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding-top: 30px;
+}
+.seal-mini {
+  height: 171px;
+  flex-shrink: 0;
+  display: block;
+  text-decoration: none;
+}
+.seal-mini img { display: block; height: 100%; width: auto; border-radius: 2px; }
+.seal-mini:hover img { transform: translate(0.6px, -0.4px); }  /* 글리치가 살짝 어긋난다 */
+
+/* ══ 방 (홈 씬) — 화면 전체가 방이다: 프리렌더 클립 + 핫스팟 ═══════
+   필름이 화면을 커버로 가득 덮으므로 마당색은 로딩 한 숨 동안만 보인다 */
+.scene {
+  position: fixed;
+  inset: 0;
+  background: #e6cbc4;
+}
+.frame {
+  position: absolute;
+  transition: transform 1.15s cubic-bezier(0.3, 0, 0.15, 1);
+}
+.frame.sit { transform: scale(1.06); }             /* 앉기 — 방석 쪽으로 한 발짝 부푼다 (원점은 JS가 방석에) */
+.frame img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+/* 밤낮 클립 — 스틸과 같은 상자에 겹친다. 핫스팟(hotmap)이 위에 있어
+   전환 중에도 물건들은 계속 만질 수 있다 */
+.frame video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+.frame video[hidden] { display: none; }
+/* 반딧불 롤 — 검은 필름을 screen으로 겹치면 빛나는 점만 방 위에 얹힌다.
+   밤에만 스르륵 떠오르고(.on), 낮에는 투명한 채 멈춰 있다 */
+.frame video.ff {
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+.frame video.ff.on { opacity: 1; }
+/* 핫스팟 — 스틸 위에 겹친 투명 SVG 히트맵. 물건은 꿈쩍도 않고,
+   폴리곤(블렌더 실루엣 실측)이 커서와 키보드만 받는다 */
+.hotmap { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hotmap polygon { fill: transparent; cursor: pointer; outline: none; }
+.hotmap polygon:focus-visible { stroke: var(--seal); stroke-width: 3; stroke-dasharray: 10 8; }
+.frame.dev .hotmap polygon { fill: rgba(196, 85, 47, 0.28); stroke: #c4552f; stroke-width: 2.5; }   /* ?dev — 폴리곤 검산 */
+/* 오브젝트 호버 명패 — 이름 · 점 · 액션 (handoff 2: Object hover label 스펙) */
+.plate3d[hidden] { display: none; }
+.plate3d {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+  padding: 9px 14px;
+  border-radius: 8px;
+  background: rgba(246, 243, 236, 0.94);
+  border: 1px solid rgba(58, 44, 37, 0.14);
+  box-shadow: 0 4px 14px rgba(58, 44, 37, 0.12);
+  font-family: var(--s3-mono);
+  pointer-events: none;
+  z-index: 5;
+  animation: plate3d-in 120ms ease;
+}
+.plate3d b { font-weight: 500; font-size: 12.5px; line-height: 1; color: #3a2c25; }
+.plate3d i { width: 4px; height: 4px; border-radius: 50%; background: #6b4136; flex: none; }
+.plate3d span { font-weight: 400; font-size: 12.5px; line-height: 1; color: rgba(58, 44, 37, 0.5); }
+@keyframes plate3d-in {
+  from { opacity: 0; transform: translate(-50%, calc(-100% + 6px)); }
+  to { opacity: 1; transform: translate(-50%, -100%); }
+}
+[data-theme="night"] .plate3d {
+  background: rgba(31, 27, 23, 0.94);
+  border-color: rgba(244, 241, 233, 0.12);
+  box-shadow: none;
+}
+[data-theme="night"] .plate3d b { color: #f4f1e9; }
+[data-theme="night"] .plate3d i { background: #e3d8c4; }
+[data-theme="night"] .plate3d span { color: rgba(244, 241, 233, 0.5); }
+
+@media (prefers-reduced-motion: reduce) {
+  body { transition: none; }
+  .plate3d { animation: none; }
+  .frame { transition: none; }
+}
+
+/* ══ 세션 흐름 — 3a 시간 고르기 → 3b 앉기 → 3c 기록 ═══════════
+   스펙: design_handoff_meditation_room/README.md (high-fidelity).
+   낮은 크림(#f0ece2) 세계, 밤은 2a의 먹빛(#26211c) 세계.
+   화면 전환은 body[data-s3]가, 등장은 body.s3-ready가 쥔다. */
+
+:root {
+  --s3-serif: 'Instrument Serif', Georgia, serif;
+  --s3-mono: 'DM Mono', ui-monospace, Menlo, monospace;
+  --s3-bg: #e6cbc4;                 /* 마당의 종이색 — 4K 스틸 backdrop 실측 #E6CBC4 */
+  --s3-bg-r: 230, 203, 196;
+  --s3-scrim-r: 230, 203, 196;      /* 3a 아랫단 스크림 — 씬 종이색으로 녹는다 */
+  --s3-scrim-solid: #e6cbc4;
+  --s3-dim-r: 224, 196, 189;        /* 3b 방사형 스크림 밑색 */
+  --s3-ink: #3a2c25;
+  --s3-ink70: rgba(58, 44, 37, 0.70);
+  --s3-ink62: rgba(58, 44, 37, 0.62);
+  --s3-ink50: rgba(58, 44, 37, 0.50);
+  --s3-ink45: rgba(60, 45, 38, 0.45);
+  --s3-ink42: rgba(60, 45, 38, 0.42);
+  --s3-ink38: rgba(60, 45, 38, 0.38);
+  --s3-ink35: rgba(58, 44, 37, 0.35);
+  --s3-line: rgba(58, 44, 37, 0.20);
+  --s3-line-hover: rgba(58, 44, 37, 0.35);
+  --s3-pill-line: rgba(58, 44, 37, 0.22);
+  --s3-row-line: rgba(58, 44, 37, 0.12);
+  --s3-row-line2: rgba(58, 44, 37, 0.08);
+  --s3-divider: rgba(58, 44, 37, 0.14);
+  --s3-fill: #3a2c25;
+  --s3-on-fill: #f0ece2;
+  --s3-cta: #6b4136;
+  --s3-cta-hover: #5c382e;
+  --s3-on-cta: #f6f3ec;
+  --s3-orange: #c4552f;
+  --s3-ring: rgba(107, 65, 54, 0.20);
+  --s3-home-line: rgba(107, 65, 54, 0.30);
+  --s3-home-ink: #6b4136;
+  --s3-raised: rgba(246, 243, 236, 0.90);
+  --s3-raised-line: rgba(58, 44, 37, 0.10);
+  --s3-hm0: #d1c0b2; --s3-hm1: #dcbfa9; --s3-hm2: #dd9b78; --s3-hm3: #cf6f43; --s3-hm4: #b8481f;
+  --s3-tip-bg: rgba(38, 30, 26, 0.92);
+  --s3-tip-ink: #f0ece2;
+}
+[data-theme="night"] {
+  --s3-bg: #26211c;
+  --s3-bg-r: 38, 33, 28;
+  --s3-scrim-r: 22, 21, 16;
+  --s3-scrim-solid: #161510;
+  --s3-dim-r: 30, 22, 18;
+  --s3-ink: #f4f1e9;
+  --s3-ink70: rgba(244, 241, 233, 0.70);
+  --s3-ink62: rgba(244, 241, 233, 0.62);
+  --s3-ink50: rgba(244, 241, 233, 0.50);
+  --s3-ink45: rgba(244, 241, 233, 0.50);   /* 먹지 위에선 반 톤 밝힌다 */
+  --s3-ink42: rgba(244, 241, 233, 0.45);
+  --s3-ink38: rgba(244, 241, 233, 0.38);
+  --s3-ink35: rgba(244, 241, 233, 0.35);
+  --s3-line: rgba(244, 241, 233, 0.22);
+  --s3-line-hover: rgba(244, 241, 233, 0.40);
+  --s3-pill-line: rgba(244, 241, 233, 0.24);
+  --s3-row-line: rgba(244, 241, 233, 0.14);
+  --s3-row-line2: rgba(244, 241, 233, 0.08);
+  --s3-divider: rgba(244, 241, 233, 0.14);
+  --s3-fill: #f4f1e9;
+  --s3-on-fill: #26211c;
+  --s3-cta: #f4f1e9;
+  --s3-cta-hover: #e4dfd2;
+  --s3-on-cta: #26211c;
+  --s3-orange: #d9572a;
+  --s3-ring: rgba(240, 236, 226, 0.28);
+  --s3-home-line: rgba(244, 241, 233, 0.30);
+  --s3-home-ink: rgba(244, 241, 233, 0.85);
+  --s3-raised: rgba(38, 33, 28, 0.92);
+  --s3-raised-line: rgba(244, 241, 233, 0.14);
+  --s3-hm0: #332d27; --s3-hm1: #5c2f20; --s3-hm2: #8a3a22; --s3-hm3: #b34724; --s3-hm4: #d9572a;
+  --s3-tip-bg: rgba(246, 243, 236, 0.95);
+  --s3-tip-ink: #29241b;
+}
+
+/* ── 화면 전환 ── */
+.s3a, .s3b, .s3c, .s3-nav {
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.55s ease, visibility 0s linear 0.6s;
+}
+body.s3-ready[data-s3="pick"] .s3a,
+body.s3-ready[data-s3="sitting"] .s3b,
+body.s3-ready[data-s3="log"] .s3c,
+body.s3-ready[data-s3="room"] .s3-nav,
+body.s3-ready[data-s3="pick"] .s3-nav,
+body.s3-ready[data-s3="log"] .s3-nav {
+  opacity: 1; visibility: visible;
+  transition: opacity 0.55s ease;
+}
+body.s3-ready[data-s3="sitting"] .s3b { transition: opacity 0.8s ease 0.45s; }  /* 카메라가 방석 앞에 닿을 즈음 */
+.scene { transition: filter 0.8s ease; }
+body[data-s3="sitting"] .scene { filter: saturate(0.85); }
+
+.s3 button { cursor: pointer; }   /* 배경·테두리는 각 단추가 스스로 입는다 — 리셋이 이기면 안 된다 */
+
+/* ── 3a 시간 고르기 ── */
+.s3a { position: fixed; inset: 0; pointer-events: none; }
+.s3a-scrim {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 210px; z-index: 4;
+  background: linear-gradient(rgba(var(--s3-scrim-r), 0), rgba(var(--s3-scrim-r), 0.85) 40%, var(--s3-scrim-solid) 74%);
+}
+.s3a-stack {
+  position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); z-index: 6;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  pointer-events: auto;
+}
+.s3-eyebrow { font: 400 10px/1 var(--s3-mono); letter-spacing: 0.24em; text-transform: uppercase; color: var(--s3-ink45); }
+.s3a-pills { display: flex; gap: 9px; }
+.s3-pill {
+  padding: 11px 20px; border-radius: 22px; background: none;
+  border: 1px solid var(--s3-pill-line);
+  color: var(--s3-ink62); font: 400 12px/1 var(--s3-mono); white-space: nowrap;
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.s3-pill:hover { border-color: var(--s3-line-hover); }
+.s3-pill[aria-pressed="true"] { background: var(--s3-fill); border-color: var(--s3-fill); color: var(--s3-on-fill); }
+.s3-pill input {                                   /* 커스텀 알약 속 분(分) 입력 — 알약이 곧 입력창 */
+  font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0;
+  text-align: right; outline: none; caret-color: currentColor;
+}
+.s3a-begin {
+  padding: 12px 30px; border-radius: 24px; border: 0;
+  background: var(--s3-cta); color: var(--s3-on-cta);
+  font: 400 12.5px/1 var(--s3-mono); white-space: nowrap;
+  transition: background 0.12s ease;
+}
+.s3a-begin:hover { background: var(--s3-cta-hover); }
+.s3a-hint { position: absolute; left: 20px; bottom: 18px; z-index: 6; font: 400 9.5px/1.6 var(--s3-mono); color: var(--s3-ink38); }
+
+/* ── 공용 상단 우측 내비 (log · sound) ── */
+.s3-nav { position: fixed; top: 20px; right: 20px; z-index: 26; display: flex; gap: 8px; pointer-events: auto; }
+.s3-chip {
+  padding: 7px 13px; border-radius: 8px; background: none;
+  border: 1px solid var(--s3-line);
+  font: 400 10.5px/1 var(--s3-mono); color: var(--s3-ink70);
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.s3-chip:hover { border-color: var(--s3-line-hover); }
+.s3-chip[aria-pressed="true"] { background: var(--s3-fill); border-color: var(--s3-fill); color: var(--s3-on-fill); }
+
+/* ── 3b 앉아 있는 동안 ── */
+.s3b { position: fixed; inset: 0; z-index: 18; pointer-events: auto; }
+.s3b-scrim {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 48%,
+    rgba(var(--s3-dim-r), 0.9) 0%, rgba(var(--s3-dim-r), 0.72) 40%,
+    rgba(var(--s3-dim-r), 0.4) 78%, rgba(var(--s3-dim-r), 0.2) 100%);
+}
+.s3b-state { position: absolute; top: 20px; left: 22px; font: 400 10px/1 var(--s3-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--s3-ink42); }
+.s3b-controls { position: absolute; top: 18px; right: 20px; display: flex; gap: 8px; align-items: center; }
+.s3b-pause {
+  width: 30px; height: 30px; border-radius: 50%; background: none; padding: 0;
+  border: 1px solid var(--s3-line);
+  display: grid; place-items: center;
+  font-size: 9px; color: var(--s3-ink62);
+  transition: border-color 0.12s ease;
+}
+.s3b-pause:hover { border-color: var(--s3-line-hover); }
+.s3b-end {
+  padding: 8px 13px; border-radius: 8px; background: none;
+  border: 1px solid var(--s3-line);
+  font: 400 10.5px/1 var(--s3-mono); color: var(--s3-ink70);
+  transition: border-color 0.12s ease;
+}
+.s3b-end:hover { border-color: var(--s3-line-hover); }
+.s3b-ring {
+  position: absolute; left: 50%; top: 50%; width: 240px; height: 240px; margin: -120px 0 0 -120px;
+  border-radius: 50%; border: 1px solid var(--s3-ring); opacity: 0.25;
+}
+body[data-s3="sitting"] .s3b-ring { animation: s3breathe 10s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+body.s3-paused .s3b-ring { animation-play-state: paused; }
+@keyframes s3breathe {                      /* 4초 들숨 / 6초 날숨 */
+  0% { transform: scale(1); opacity: 0.2; }
+  40% { transform: scale(1.06); opacity: 0.35; }
+  100% { transform: scale(1); opacity: 0.2; }
+}
+.s3b-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; }
+.s3b-timer { display: flex; justify-content: center; font: 400 82px/1 var(--s3-serif); color: var(--s3-ink); }
+.s3b-timer span { width: 0.56em; text-align: center; }   /* 자리폭 고정 — 초가 바뀌어도 떨리지 않게 */
+.s3b-timer span.c { width: 0.30em; }
+.s3b-breath { position: relative; height: 10px; margin-top: 14px; font: 400 9.5px/1 var(--s3-mono); letter-spacing: 0.22em; text-transform: uppercase; color: var(--s3-ink45); }
+.s3b-breath span { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; opacity: 0; transition: opacity 1.4s ease; }
+.s3b-breath span.on { opacity: 1; }
+.s3b-np {
+  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 15px; border-radius: 22px;
+  background: var(--s3-raised); border: 1px solid var(--s3-raised-line);
+}
+.s3b-np[hidden] { display: none; }
+.s3b-np-disc { width: 24px; height: 24px; border-radius: 5px; background: var(--s3-orange); display: grid; place-items: center; }
+.s3b-np-disc i { width: 8px; height: 8px; border-radius: 50%; background: #2b211c; box-shadow: 0 0 0 2px rgba(240, 236, 226, 0.6); }
+.s3b-np-title { font: 400 10.5px/1 var(--s3-mono); color: var(--s3-ink70); }
+.s3b-np-sep { font: 400 10.5px/1 var(--s3-mono); color: var(--s3-ink35); }
+.s3b-np-vol { font: 400 10.5px/1 var(--s3-mono); color: var(--s3-ink50); }
+
+/* ── 3c 기록 ── */
+.s3c { position: fixed; inset: 0; z-index: 24; background: var(--s3-bg); overflow-y: auto; pointer-events: auto; transition: opacity 0.55s ease, visibility 0s linear 0.6s, background 0.5s ease; }
+.s3c-inner { max-width: 1000px; margin: 0 auto; padding: 74px 30px 44px; display: flex; flex-direction: column; gap: 26px; }
+
+/* 세션 직후 — 2a의 완결 상태가 헤더 자리를 대신한다. 방이 위쪽에 비쳐 보인다 */
+body.s3-complete .s3c {
+  background: linear-gradient(to bottom,
+    rgba(var(--s3-bg-r), 0.60) 0, rgba(var(--s3-bg-r), 0.84) 300px, var(--s3-bg) 470px);
+}
+.s3c-complete { display: none; flex-direction: column; align-items: center; gap: 14px; padding-top: 22px; text-align: center; }
+body.s3-complete .s3c-complete { display: flex; }
+body.s3-complete .s3c-head, body.s3-complete .s3c-list { display: none; }
+body.s3-complete .s3c-loglabel { display: flex; }
+.s3c-c-eyebrow { font: 400 10px/1 var(--s3-mono); letter-spacing: 0.24em; text-transform: uppercase; color: var(--s3-ink50); }
+.s3c-c-time { font: 400 92px/1 var(--s3-serif); color: var(--s3-ink); letter-spacing: 0.01em; }
+.s3c-c-stats { display: flex; gap: 26px; margin-top: 6px; }
+.s3c-c-stats .st { text-align: center; }
+.s3c-c-stats .st b { display: block; font: 400 20px/1 var(--s3-serif); font-weight: 400; color: var(--s3-ink); }
+.s3c-c-stats .st.hot b { color: var(--s3-orange); }
+.s3c-c-stats .st i { display: block; margin-top: 7px; font: 400 9.5px/1 var(--s3-mono); font-style: normal; letter-spacing: 0.14em; text-transform: uppercase; color: var(--s3-ink42); }
+.s3c-c-stats .div { width: 1px; background: var(--s3-divider); }
+.s3c-c-btns { display: flex; gap: 9px; margin-top: 16px; }
+.s3c-again { padding: 10px 18px; border-radius: 8px; border: 0; background: var(--s3-fill); color: var(--s3-on-fill); font: 400 11.5px/1 var(--s3-mono); }
+.s3c-back { padding: 10px 18px; border-radius: 8px; background: none; border: 1px solid var(--s3-pill-line); color: var(--s3-ink70); font: 400 11.5px/1 var(--s3-mono); transition: border-color 0.12s ease; }
+.s3c-back:hover { border-color: var(--s3-line-hover); }
+.s3c-loglabel { display: none; justify-content: space-between; align-items: baseline; }
+.s3c-loglabel .l { font: 400 14px/1 var(--s3-mono); letter-spacing: 0.02em; color: var(--s3-ink70); }
+.s3c-loglabel .r { font: 400 10px/1 var(--s3-mono); color: var(--s3-ink38); }
+
+.s3c-head { display: flex; align-items: flex-end; justify-content: space-between; }
+.s3c-title { font: 400 27px/1 var(--s3-serif); color: var(--s3-ink); }
+.s3c-sub { margin-top: 9px; font: 400 10.5px/1 var(--s3-mono); color: var(--s3-ink45); }
+.s3c-range { display: flex; gap: 7px; }
+.s3c-range .s3-chip { padding: 7px 12px; border-radius: 7px; font-size: 10px; }
+
+.s3c-heat { display: flex; flex-direction: column; gap: 7px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; scrollbar-color: var(--s3-line) transparent; }
+.s3c-heat > * { flex: none; }
+.s3c-months { display: grid; grid-template-columns: repeat(13, 1fr); width: 940px; }
+.s3c-months span { font: 400 11.5px/1 var(--s3-mono); color: var(--s3-ink42); }
+.s3c-months.one { display: block; width: auto; }
+.s3c-grid { display: flex; gap: 2.6px; width: 940px; }
+.s3c-grid .wk { display: flex; flex-direction: column; gap: 2.6px; }
+.s3c-cell { width: 14.6px; height: 14.6px; border-radius: 3px; background: var(--s3-hm0); }
+.s3c-cell.lv1 { background: var(--s3-hm1); }
+.s3c-cell.lv2 { background: var(--s3-hm2); }
+.s3c-cell.lv3 { background: var(--s3-hm3); }
+.s3c-cell.lv4 { background: var(--s3-hm4); }
+.s3c-cell.future { visibility: hidden; }
+.s3c-cell:not(.future) { cursor: pointer; }
+.s3c-cell.sel { outline: 1px solid var(--s3-ink); outline-offset: 1px; }
+.s3c-grid.cal { display: grid; grid-template-columns: repeat(7, 30px); gap: 5px; width: max-content; }
+.s3c-grid.cal .s3c-cell { width: 30px; height: 30px; border-radius: 5px; }
+.s3c-legend { display: flex; align-items: center; justify-content: flex-end; gap: 7px; width: 940px; }
+.s3c-legend span { font: 400 11px/1 var(--s3-mono); color: var(--s3-ink42); }
+.s3c-legend i { width: 14.6px; height: 14.6px; border-radius: 3px; }
+.s3c-legend .l0 { background: var(--s3-hm0); }
+.s3c-legend .l1 { background: var(--s3-hm1); }
+.s3c-legend .l2 { background: var(--s3-hm2); }
+.s3c-legend .l3 { background: var(--s3-hm3); }
+.s3c-legend .l4 { background: var(--s3-hm4); }
+
+.s3c-list { border-top: 1px solid var(--s3-row-line); }
+.s3c-row { display: flex; justify-content: space-between; padding: 11px 2px; border-bottom: 1px solid var(--s3-row-line2); font: 400 11px/1 var(--s3-mono); color: var(--s3-ink70); }
+.s3c-row:last-child { border-bottom: 0; }
+.s3c-row .trk { color: var(--s3-ink42); }
+.s3c-empty { padding: 18px 2px; font: 400 11px/1.6 var(--s3-mono); color: var(--s3-ink38); }
+
+.s3-tip {
+  position: fixed; z-index: 36; transform: translate(-50%, -100%); margin-top: -7px;
+  background: var(--s3-tip-bg); color: var(--s3-tip-ink);
+  padding: 8px 12px; border-radius: 7px;
+  font: 400 11px/1 var(--s3-mono); white-space: nowrap; pointer-events: none;
+}
+.s3-tip[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-s3="sitting"] .s3b-ring { animation: none; opacity: 0.27; }
+  .s3a, .s3b, .s3c, .s3-nav, .s3c, .scene { transition: none; }
+}
