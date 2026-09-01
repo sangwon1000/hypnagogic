@@ -45,10 +45,10 @@
     frame.appendChild(v);
     return v;
   }
-  var fwd = mkVid('assets/day2night.mp4?v=5');
+  var fwd = mkVid('assets/day2night.mp4?v=6');
   fwd.setAttribute('role', 'img');
   fwd.setAttribute('aria-label', 'a meditation room on a wooden deck, wrapped in a banyan tree');
-  var rev = mkVid('assets/night2day.mp4?v=5');
+  var rev = mkVid('assets/night2day.mp4?v=6');
   rev.hidden = true;
   rev.setAttribute('aria-hidden', 'true');
   /* 셋째 롤 — 반딧불. 검은 배경에 빛점만 있는 5초 루프를 screen 블렌드로 겹친다.
@@ -181,6 +181,12 @@
      말렛이 떠올라 림을 치고 볼이 흔들리며 도는 3초(90f) — 타격은 필름의 10프레임째라
      소리를 0.33초 뒤로 WebAudio 시계에 걸어 그림과 맞춘다. 밤낮 전환 중엔 방 필름이
      무대 주인이라 그림은 쉬고 소리만 댕 ── */
+
+  /* 패치는 방 전체가 아니라 말렛·볼이 실제로 움직이는 상자만 담는다(실측 후 여유 64px).
+     .frame 이 곧 필름 상자라(layout: IMG 비율 그대로) 자리는 순수 퍼센트로 떨어진다.
+     멀리 있는 것 — 캐노피든 마당이든 — 이 바뀌어도 이 상자 밖이면 패치는 살아남는다. */
+  var PATCH = { x: 1280, y: 1504, w: 352, h: 304 };
+
   function mkPatch(src) {
     var v = document.createElement('video');
     v.muted = true;
@@ -190,6 +196,11 @@
     v.src = src;
     v.hidden = true;
     v.setAttribute('aria-hidden', 'true');
+    v.style.inset = 'auto';                        // 제네릭 video 규칙(inset:0 전면)에서 빠져나온다
+    v.style.left = (PATCH.x / IMG_W * 100) + '%';
+    v.style.top = (PATCH.y / IMG_H * 100) + '%';
+    v.style.width = (PATCH.w / IMG_W * 100) + '%';
+    v.style.height = (PATCH.h / IMG_H * 100) + '%';
     frame.insertBefore(v, ff);                     // 반딧불 아래, 방 필름 위
     v.addEventListener('ended', function () {
       v.hidden = true;
@@ -198,8 +209,8 @@
     v.addEventListener('error', function () { v.hidden = true; });
     return v;
   }
-  var bowlN = mkPatch('assets/bowl_night.mp4?v=1');
-  var bowlD = mkPatch('assets/bowl_day.mp4?v=1');
+  var bowlN = mkPatch('assets/bowl_night.mp4?v=2');
+  var bowlD = mkPatch('assets/bowl_day.mp4?v=2');
   var patchesLoaded = false;
   function loadPatches() {
     if (patchesLoaded) return;
