@@ -1,5 +1,28 @@
 # hypnagogic.xyz 런칭 — 핸드오프
 
+## 진행 로그 (2026-09-01 오후)
+
+- ✅ **5단계 완료**: `portfolio` 스키마 + `portfolio_app` role(암호: 서버 `/root/supabase/docker/.env.portfolio`) + `meditation_sessions` 테이블(RLS own-rows) — 드라이런 후 커밋, `/root/hub-migrations/2026-09-01-portfolio.sql`
+- ✅ **PGRST_DB_SCHEMAS에 portfolio 추가** + rest 재시작, `Accept-Profile: portfolio`로 200 확인
+- ✅ **기존 기록 이관**: 크롬(localhost:4173) localStorage `am-log`를 leveldb 포렌식으로 복원 → 46회/793분(2026-07-18~08-31), sangwoncheon93 계정(7e3cb990-…)으로 임포트
+- ✅ **4단계 일부**: `ADDITIONAL_REDIRECT_URLS`에 hypnagogic.xyz + localhost:4173 추가, auth 재시작(백업 `.env.bak-20260901`). **SITE_URL 전환은 보류** — Ridgeline 기본 리다이렉트가 바뀌므로 별도 결정 필요
+- ✅ **3단계 회피 확인**: API_EXTERNAL_URL을 안 바꾸는 한 구글 콘솔 작업 불필요 — 기존 ridgelinehk 콜백을 그대로 탄다. auth.hypnagogic.xyz로 넘어갈 때만 §3 순서 주의
+- ✅ **사이트 통합**: 이 저장소 `site/`에 supabase-js 벤더 + `auth.js`(구글 로그인 칩, am-log↔DB 양방향 동기화, unique(user_id, logged_at)로 멱등)
+- ✅ **DNS 완료**: Cloudflare A 레코드 `@`·`*` → 168.119.175.141 (DNS only). apex·와일드카드 전부 정상 해석
+- ✅ **2단계 완료**: Kong compose에 `auth.hypnagogic.xyz` 라우터 한 쌍 추가(백업 `docker-compose.yml.bak-20260901`), LE 인증서 발급 확인(만료 2026-11-30), GoTrue health 200. Ridgeline 도메인 무사(교체 아닌 추가)
+- ✅ **GitHub 푸시 완료**: https://github.com/sangwon1000/hypnagogic (public, main)
+- ⏳ **8단계 = 유일하게 남은 것, 대시보드 필수**: Dokploy API가 해시키/서명쿠키라 CLI 자동화 불가. 아래 "Dokploy 등록 방법" 참조
+- ⏳ SITE_URL 전환 여부 결정(§4)
+
+## Dokploy 등록 방법 (남은 유일한 수동 단계)
+
+Dokploy 대시보드 → 기존 프로젝트(또는 새 프로젝트) → **Create Application**:
+- Source: **GitHub** (설치된 App `sangwon1000` 사용) → repo `sangwon1000/hypnagogic`, branch `main`
+- Build Type: **Dockerfile** (경로 `./Dockerfile` 그대로 — 다른 앱들과 동일 패턴)
+- Domain: **hypnagogic.xyz** 추가 → HTTPS 켜고 certresolver **letsencrypt**, 컨테이너 포트 **80**
+  - www도 원하면 `www.hypnagogic.xyz` 라우터 하나 더(와일드카드 DNS라 바로 붙음)
+- Deploy 누르면 git에서 빌드→기동. 레퍼런스: `mountain-viewer-cg9aga`(Ridgeline)가 같은 방식
+
 2026-09-01 기준. 이 문서 하나로 런칭 작업을 시작할 수 있게 쓴 인계 노트다.
 DB 운영 규칙 상세는 별도 문서가 있다 → `hk-trail-data/docs/supabase-hub.md`
 (새 저장소에 복사해 오는 걸 권장).
