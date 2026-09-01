@@ -96,6 +96,44 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--seal); outline-
   inset: 0;
   background: #e6cbc4;
 }
+[data-theme="night"] .scene { background: var(--paper); }   /* 필름이 화면을 못 덮는 순간(짧은 창·회전 직후)에 낮 마당이 새지 않게 */
+
+/* ── 세로 화면은 사양한다 — 방은 16:9로 누운 필름이라 세로 폰에선 방의 3분의 1만 남는다.
+   돌려 들면 커버 레이아웃이 제 몫을 한다 ── */
+.rotate { display: none; }
+@media (orientation: portrait) and (max-width: 1024px) {
+  .rotate {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: #e6cbc4;
+    color: var(--ink2);
+    text-align: center;
+    padding: 32px;
+  }
+  [data-theme="night"] .rotate { background: var(--paper); }
+  .rotate .r-glyph { width: 44px; height: 44px; opacity: 0.65; }
+  .rotate .r-glyph svg { width: 100%; height: 100%; display: block; }
+  .rotate .r-txt {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    color: var(--ink);
+  }
+  .rotate .r-sub {
+    font-family: var(--serif, var(--mono));
+    font-style: italic;
+    font-size: 14px;
+    opacity: 0.6;
+  }
+  /* 세로인 동안 방과 세션 UI는 물러난다 — 화면 밖으로 밀린 방을 보여 줄 이유가 없다 */
+  .scene, .plate3d, .s3 { visibility: hidden; }
+}
 .frame {
   position: absolute;
   transition: transform 1.15s cubic-bezier(0.3, 0, 0.15, 1);

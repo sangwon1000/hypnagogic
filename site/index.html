@@ -14,7 +14,7 @@ apply();addEventListener('storage',function(e){if(e.key==='am-theme-override')ap
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=DM+Mono:wght@300;400;500&amp;family=DM+Sans:wght@300;400;500&amp;display=swap">
-<link rel="stylesheet" href="assets/style.css?v=21">
+<link rel="stylesheet" href="assets/style.css?v=22">
 <style>
   html, body { height: 100%; overflow: hidden; }
   /* 마당 — 4K 스틸의 backdrop 핑크와 한 몸 (렌더 실측 #E6CBC4) */
@@ -36,6 +36,19 @@ apply();addEventListener('storage',function(e){if(e.key==='am-theme-override')ap
 <body>
 
 <div class="scene" aria-label="the room — every object does one thing"></div>
+
+<!-- 세로 화면 — 방은 가로로 누운 필름이다. 세로로 들면 방이 화면 밖으로 밀려나므로 돌려 달라 청한다 -->
+<div class="rotate" role="status">
+  <span class="r-glyph" aria-hidden="true">
+    <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="14.5" y="4.5" width="15" height="26" rx="2.5"/>
+      <path d="M8 26a15 15 0 0 0 15 13"/>
+      <path d="M5 22.5 8 26l3.5-3"/>
+    </svg>
+  </span>
+  <span class="r-txt">turn your phone</span>
+  <span class="r-sub">the room lies down</span>
+</div>
 
 <div class="load" id="amLoad" role="status" aria-label="loading the room">
   <span class="l-txt">opening the room</span>
@@ -65,7 +78,7 @@ apply();addEventListener('storage',function(e){if(e.key==='am-theme-override')ap
 })()</script>
 
 <script src="assets/ambient.js?v=5"></script>
-<script src="assets/room2d.js?v=16" defer></script>
+<script src="assets/room2d.js?v=17" defer></script>
 <script src="assets/session.js?v=8" defer></script>
 <script src="assets/vendor/supabase-2.js" defer></script>
 <script src="assets/auth.js?v=2" defer></script>

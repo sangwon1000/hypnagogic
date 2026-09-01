@@ -34,6 +34,12 @@
   var frame = document.createElement('div');
   frame.className = 'frame';
   frame.style.transformOrigin = (CUSHION.x / IMG_W * 100) + '% ' + (CUSHION.y / IMG_H * 100) + '%';
+  /* 폰에는 가벼운 필름을 — 4K 롤 셋(합 7.9MB, 15Mbps)은 폰의 디코더와 메모리에 버겁다.
+     화면 최장변이 1100 CSS px 미만이면 1080p 판을 쓴다(폰만 걸리고 태블릿·데스크톱은 4K).
+     패치는 원래 작아 한 벌로 족하다 — 어차피 퍼센트로 앉으니 해상도는 선명함에만 관여한다. */
+  var SMALL = Math.max(screen.width, screen.height) < 1100;
+  function film(name, v) { return 'assets/' + name + (SMALL ? '_1080' : '') + '.mp4?v=' + v; }
+
   /* ── 필름 두 롤이 방의 전부 — fwd(낮→밤)가 정지 화면까지 맡고, rev(밤→낮)는 전환에만 나온다 ── */
   function mkVid(src) {
     var v = document.createElement('video');
@@ -45,16 +51,16 @@
     frame.appendChild(v);
     return v;
   }
-  var fwd = mkVid('assets/day2night.mp4?v=6');
+  var fwd = mkVid(film('day2night', 6));
   fwd.setAttribute('role', 'img');
   fwd.setAttribute('aria-label', 'a meditation room on a wooden deck, wrapped in a banyan tree');
-  var rev = mkVid('assets/night2day.mp4?v=6');
+  var rev = mkVid(film('night2day', 6));
   rev.hidden = true;
   rev.setAttribute('aria-hidden', 'true');
   /* 셋째 롤 — 반딧불. 검은 배경에 빛점만 있는 5초 루프를 screen 블렌드로 겹친다.
      밤낮 필름과 같은 카메라로 찍어 홀드아웃 재단까지 픽셀이 맞고,
      등장·퇴장은 렌더가 아니라 여기 페이드가 맡는다 */
-  var ff = mkVid('assets/fireflies.mp4?v=3');
+  var ff = mkVid(film('fireflies', 3));
   ff.classList.add('ff');
   ff.loop = true;
   ff.setAttribute('aria-hidden', 'true');
