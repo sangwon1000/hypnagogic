@@ -6,7 +6,7 @@
   'use strict';
   if (!window.supabase) return;                    // 벤더 스크립트가 없으면 익명 모드로 침묵
 
-  var API = 'https://supabase.ridgelinehk.com';
+  var API = 'https://auth.hypnagogic.xyz';
   var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzc2OTkwNjUyLCJleHAiOjIwOTIzNTA2NTJ9.25ujMBTJaoL7XGpcJ7sUomjkfxMLDkhNaD_7zxSU2No';
   var TABLE = 'meditation_sessions';
 
