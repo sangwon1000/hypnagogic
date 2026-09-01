@@ -11,17 +11,17 @@
 - ✅ **DNS 완료**: Cloudflare A 레코드 `@`·`*` → 168.119.175.141 (DNS only). apex·와일드카드 전부 정상 해석
 - ✅ **2단계 완료**: Kong compose에 `auth.hypnagogic.xyz` 라우터 한 쌍 추가(백업 `docker-compose.yml.bak-20260901`), LE 인증서 발급 확인(만료 2026-11-30), GoTrue health 200. Ridgeline 도메인 무사(교체 아닌 추가)
 - ✅ **GitHub 푸시 완료**: https://github.com/sangwon1000/hypnagogic (public, main)
-- ⏳ **8단계 = 유일하게 남은 것, 대시보드 필수**: Dokploy API가 해시키/서명쿠키라 CLI 자동화 불가. 아래 "Dokploy 등록 방법" 참조
-- ⏳ SITE_URL 전환 여부 결정(§4)
+- ✅ **8단계 완료 — 라이브**: https://hypnagogic.xyz + www 둘 다 200, LE 인증서 발급(만료 2026-11-30). Dokploy 프로젝트 `hypnagogic` / 앱 `hypnagogic-room`(applicationId `NxCGnsYtufmfDQA93ra7m`, project `hxA1TXMbE8kRImnlnbwDm`, env `30ubwq_UvmUUbahdGbBav`), GitHub push→자동배포(autoDeploy on, githubId `2SldEdN316fFz6Bn_bviJ` 공유), Dockerfile 빌드. 끝단 검증: 필름 5개 readyState 4, 콘솔 에러 0, anon REST 200, 구글 authorize URL(redirect_to=hypnagogic.xyz) 정상, 칩 4개(day·log·sound·sign in) 렌더
+- ⏳ **남은 결정**: (a) SITE_URL 전환 여부(§4 — 현재 ridgelinehk 유지 중, 안 바꿔도 로그인 동작) (b) SMTP는 구글 OAuth만 쓰면 불필요, 이메일 가입 열 때만 §"먼저 해결"
 
-## Dokploy 등록 방법 (남은 유일한 수동 단계)
+## Dokploy 등록 (완료 — 재현/참고용)
 
-Dokploy 대시보드 → 기존 프로젝트(또는 새 프로젝트) → **Create Application**:
-- Source: **GitHub** (설치된 App `sangwon1000` 사용) → repo `sangwon1000/hypnagogic`, branch `main`
-- Build Type: **Dockerfile** (경로 `./Dockerfile` 그대로 — 다른 앱들과 동일 패턴)
-- Domain: **hypnagogic.xyz** 추가 → HTTPS 켜고 certresolver **letsencrypt**, 컨테이너 포트 **80**
-  - www도 원하면 `www.hypnagogic.xyz` 라우터 하나 더(와일드카드 DNS라 바로 붙음)
-- Deploy 누르면 git에서 빌드→기동. 레퍼런스: `mountain-viewer-cg9aga`(Ridgeline)가 같은 방식
+API로 등록함(대시보드 아닌 REST, x-api-key). 앱 재생성 필요 시:
+project.create → application.create(environmentId) → application.saveGithubProvider
+(owner/repository/branch/githubId/buildPath) → application.saveBuildType
+(buildType=dockerfile, dockerfile="Dockerfile", **herokuVersion·railpackVersion 필수**)
+→ domain.create ×2(apex+www, https, certificateType=letsencrypt, port 80)
+→ application.deploy. 레퍼런스 앱: `mountain-viewer-cg9aga`.
 
 2026-09-01 기준. 이 문서 하나로 런칭 작업을 시작할 수 있게 쓴 인계 노트다.
 DB 운영 규칙 상세는 별도 문서가 있다 → `hk-trail-data/docs/supabase-hub.md`
