@@ -82,6 +82,7 @@
   root.className = 's3';
   root.innerHTML =
     '<div class="s3a" aria-label="pick a time">' +
+      '<div class="s3a-back"></div>' +                 // 알약 바깥 아무 데나 — 고르지 않기로 하는 길
       '<div class="s3a-scrim"></div>' +
       '<div class="s3a-stack">' +
         '<div class="s3-eyebrow">how long will you sit</div>' +
@@ -535,6 +536,9 @@
       renderPills();
       setView('pick');
     } else if (v === 'pick') setView('room');
+  });
+  $('.s3a-back').addEventListener('click', function () {  // 알약 뒤를 눌러도 나간다 — 방석을 다시 찾지 않아도 되게
+    if (document.body.dataset.s3 === 'pick') setView('room');
   });
   pauseBtn.addEventListener('click', pauseToggle);
   endBtn.addEventListener('click', function () {

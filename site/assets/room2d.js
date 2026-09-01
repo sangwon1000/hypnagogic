@@ -154,9 +154,14 @@
      클램프. 그래도 방이 화면보다 크면 위아래(좌우)를 공평하게 희생 ── */
   function layout() {
     var vw = innerWidth, vh = innerHeight;
-    var s = Math.max(vw / IMG_W, vh / IMG_H);
+    /* 커버가 원칙이지만, 세로로 긴 화면(폰)에서는 커버가 방을 화면 밖으로 4배쯤 밀어낸다 —
+       그럴 땐 방이 통째로 들어오는 배율까지 물러서고, 남는 자리는 마당색이 받는다.
+       가로 화면에서는 fit이 늘 cover보다 크므로 아래 min은 아무것도 바꾸지 않는다. */
+    var s = Math.min(Math.max(vw / IMG_W, vh / IMG_H),
+                     Math.min(vw / ROOM.w, vh / ROOM.h));
     var w = IMG_W * s, h = IMG_H * s;
     function axis(view, span, room0, roomLen) {   // frame 오프셋: 중앙 선호, 방 보호 클램프
+      if (span <= view) return (view - span) / 2; // 필름이 화면보다 작다 — 가운데 세운다
       var ideal = (view - span) / 2;
       var lo = -room0 * s;                        // 방 시작이 화면 안: offset ≥ lo
       var hi = view - (room0 + roomLen) * s;      // 방 끝이 화면 안: offset ≤ hi
