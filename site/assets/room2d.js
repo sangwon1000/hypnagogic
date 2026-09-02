@@ -199,7 +199,10 @@
 
   /* 패치는 방 전체가 아니라 말렛·볼이 실제로 움직이는 상자만 담는다(실측 후 여유 64px).
      .frame 이 곧 필름 상자라(layout: IMG 비율 그대로) 자리는 순수 퍼센트로 떨어진다.
-     멀리 있는 것 — 캐노피든 마당이든 — 이 바뀌어도 이 상자 밖이면 패치는 살아남는다. */
+     멀리 있는 것 — 캐노피든 마당이든 — 이 바뀌어도 이 상자 밖이면 패치는 살아남는다.
+     해상도는 필름을 따라간다: 폰(1080 필름) 위에 4K 패치를 얹으면 GPU 축소 배율이
+     서로 달라(3.4:1 vs 6.9:1) 흐림결이 어긋나 상자가 네모로 드러난다 — 같은 격자에서
+     잘라낸 1080 패치라야 픽셀이 한 몸이 된다. */
   var PATCH = { x: 1280, y: 1504, w: 352, h: 304 };
 
   function mkPatch(src) {
@@ -218,24 +221,36 @@
     v.style.height = (PATCH.h / IMG_H * 100) + '%';
     frame.insertBefore(v, ff);                     // 반딧불 아래, 방 필름 위
     v.addEventListener('ended', function () {
+      v.__strike = false;
       v.hidden = true;
       try { v.currentTime = 0; } catch (e) {}
     });
     v.addEventListener('error', function () { v.hidden = true; });
     return v;
   }
-  var bowlN = mkPatch('assets/bowl_night.mp4?v=2');
-  var bowlD = mkPatch('assets/bowl_day.mp4?v=2');
+  var bowlN = mkPatch(film('bowl_night', 3));
+  var bowlD = mkPatch(film('bowl_day', 3));
   var patchesLoaded = false;
   function loadPatches() {
     if (patchesLoaded) return;
     patchesLoaded = true;
-    [bowlN, bowlD].forEach(function (v) { v.preload = 'auto'; v.load(); });
+    [bowlN, bowlD].forEach(function (v) {
+      v.preload = 'auto'; v.load();
+      /* iOS는 preload를 무시한다 — 숨은 채 한 바퀴 걷어차 데이터와 첫 프레임 디코드를
+         미리 받아 둔다(muted+playsinline이라 제스처 없이 허용, 저전력 모드면 거절 →
+         그 기기에선 소리만 낸다). 걷어차는 중에 진짜 타격이 오면 손을 뗀다 */
+      var p = v.play();
+      if (p && p.then) p.then(function () {
+        if (!v.__strike) { v.pause(); try { v.currentTime = 0; } catch (e) {} }
+      }, function () {});
+    });
   }
   addEventListener('am-ready', function () { setTimeout(function () { loadPatches(); loadTick(); }, 2500); }, { once: true });
   function bowlHide() {
     [bowlN, bowlD].forEach(function (v) {
-      if (!v.hidden) { v.pause(); v.hidden = true; try { v.currentTime = 0; } catch (e) {} }
+      v.__strike = false;
+      if (!v.paused) v.pause();
+      if (!v.hidden) { v.hidden = true; try { v.currentTime = 0; } catch (e) {} }
     });
   }
 
@@ -307,9 +322,13 @@
     }
     if (!v) { strikeBowl(0); return; }
     try { v.currentTime = 0; } catch (e) {}        // 연타 = 다시 때리기
-    v.hidden = false;
+    v.__strike = true;
     var p = v.play();
-    if (p) p.catch(function () { v.hidden = true; });
+    /* 첫 프레임이 실제로 구를 때에야 보인다 — iOS는 재생이 서기 전의 비디오를
+       검은 상자로 그린다(깜빡임의 정체). 그 사이 밤낮 전환이 채가면 그대로 숨어 있는다 */
+    if (p && p.then) p.then(function () { if (v.__strike && !v.paused) v.hidden = false; },
+                            function () { v.__strike = false; v.hidden = true; });
+    else v.hidden = false;
     strikeBowl(STRIKE_AT);
   }
 

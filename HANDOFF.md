@@ -13,6 +13,9 @@
 - ✅ **GitHub 푸시 완료**: https://github.com/sangwon1000/hypnagogic (public, main)
 - ✅ **8단계 완료 — 라이브**: https://hypnagogic.xyz + www 둘 다 200, LE 인증서 발급(만료 2026-11-30). Dokploy 프로젝트 `hypnagogic` / 앱 `hypnagogic-room`(applicationId `NxCGnsYtufmfDQA93ra7m`, project `hxA1TXMbE8kRImnlnbwDm`, env `30ubwq_UvmUUbahdGbBav`), GitHub push→자동배포(autoDeploy on, githubId `2SldEdN316fFz6Bn_bviJ` 공유), Dockerfile 빌드. 끝단 검증: 필름 5개 readyState 4, 콘솔 에러 0, anon REST 200, 구글 authorize URL(redirect_to=hypnagogic.xyz) 정상, 칩 4개(day·log·sound·sign in) 렌더
 - ⏳ **남은 결정**: (a) SITE_URL 전환 여부(§4 — 현재 ridgelinehk 유지 중, 안 바꿔도 로그인 동작) (b) SMTP는 구글 OAuth만 쓰면 불필요, 이메일 가입 열 때만 §"먼저 해결"
+- ✅ **OAuth 새 이름 전환(09-01 저녁)**: 새 구글 클라우드 프로젝트+클라이언트(640124335221-…), `GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI`+`API_EXTERNAL_URL`→auth.hypnagogic.xyz. 크리덴셜은 docker-compose.yml 하드코딩(.env 구글 변수는 하이픈 오타로 죽은 값). 백업 `.bak-preoauth` + `/root/backups/*-pre-oauth-swap.sql`
+- ✅ **모바일 3연타(09-01 밤, v17→v19)**: ①1080p 경량 필름(`*_1080.mp4`, screen 최장변<1100) ②iOS 부팅 데드락 해결 — loadeddata만 기다리던 관문을 3갈래(+metadata+3s)+play 발길질+poster로 ③세로모드 복구(배율 `min(cover, fit)`+가운데 정렬, 데스크톱 무변경)·픽커 배경 클릭 탈출
+- ✅ **볼 패치 1080판(09-02, v20)**: 아이폰에서 말렛 칠 때 네모 상자 깜빡임 — 원인 둘: 1080 필름 위 4K 패치는 GPU 축소 배율이 달라(3.4:1 vs 6.9:1) 상자가 드러나고, iOS는 재생이 서기 전의 비디오를 검은 상자로 그림. 처방: `bowl_*_1080.mp4`(필름과 같은 bicubic 1080 격자에서 크롭, 블록 YMAX 5/3 통과) + 패치도 `film()` 선택 + 숨은 워밍업 킥(play→pause) + 재생 성립 후에만 unhide(`__strike` 가드)
 
 ## Dokploy 등록 (완료 — 재현/참고용)
 
