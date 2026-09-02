@@ -9,6 +9,7 @@
 - 계정은 공유 허브(auth) 하나를 쓴다. 구글 로그인 → 명상 기록이
   `portfolio.meditation_sessions` 와 양방향 동기화. 익명은 localStorage 로만.
   허브 규칙: `docs/supabase-hub.md` · 런칭 절차: `HANDOFF.md`
+- 다른 저장소를 이 도메인의 경로로 들이려면 → `docs/joining.md`
 
 ## 로컬
 

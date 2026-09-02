@@ -6,7 +6,11 @@
 - ✅ **PGRST_DB_SCHEMAS에 portfolio 추가** + rest 재시작, `Accept-Profile: portfolio`로 200 확인
 - ✅ **기존 기록 이관**: 크롬(localhost:4173) localStorage `am-log`를 leveldb 포렌식으로 복원 → 46회/793분(2026-07-18~08-31), sangwoncheon93 계정(7e3cb990-…)으로 임포트
 - ✅ **4단계 일부**: `ADDITIONAL_REDIRECT_URLS`에 hypnagogic.xyz + localhost:4173 추가, auth 재시작(백업 `.env.bak-20260901`). **SITE_URL 전환은 보류** — Ridgeline 기본 리다이렉트가 바뀌므로 별도 결정 필요
-- ✅ **3단계 회피 확인**: API_EXTERNAL_URL을 안 바꾸는 한 구글 콘솔 작업 불필요 — 기존 ridgelinehk 콜백을 그대로 탄다. auth.hypnagogic.xyz로 넘어갈 때만 §3 순서 주의
+- ⚠️ **3단계 정정(2026-09-02)**: 위 회피는 실제로 쓰이지 않았다. `API_EXTERNAL_URL` 은
+  `supabase.ridgelinehk.com` → `auth.hypnagogic.xyz` 로 **이미 바뀌어 있다**(`.env.bak-20260901` 과 대조).
+  구글 콘솔에도 `https://auth.hypnagogic.xyz/auth/v1/callback` 이 등록돼 있어 동작은 정상이다.
+  다만 이제 **Ridgeline HK 의 구글 로그인도 이 호스트를 탄다** — hypnagogic 쪽 Kong 라우터가
+  죽으면 Ridgeline 로그인도 같이 죽는다는 뜻이다.
 - ✅ **사이트 통합**: 이 저장소 `site/`에 supabase-js 벤더 + `auth.js`(구글 로그인 칩, am-log↔DB 양방향 동기화, unique(user_id, logged_at)로 멱등)
 - ✅ **DNS 완료**: Cloudflare A 레코드 `@`·`*` → 168.119.175.141 (DNS only). apex·와일드카드 전부 정상 해석
 - ✅ **2단계 완료**: Kong compose에 `auth.hypnagogic.xyz` 라우터 한 쌍 추가(백업 `docker-compose.yml.bak-20260901`), LE 인증서 발급 확인(만료 2026-11-30), GoTrue health 200. Ridgeline 도메인 무사(교체 아닌 추가)
@@ -162,13 +166,15 @@ alter table public.app_access enable row level security;
 create policy "own rows" on public.app_access for select using (auth.uid() = user_id);
 ```
 
-### 7. 서브도메인 SSO (선택)
+### 7. 프로젝트 간 SSO — 경로로 해결됨
 
-supabase-js 기본값은 localStorage 라 origin 마다 세션이 따로 논다.
-한 번 로그인으로 전 프로젝트가 로그인 상태가 되게 하려면 storage 어댑터를
-`.hypnagogic.xyz` 도메인 쿠키로 바꿔야 한다. **이건 모든 프로젝트가 같은
-apex 아래 있을 때만 가능하다** — 프로젝트마다 다른 도메인을 쓰면 이 선택지가
-영구히 막히므로, 서브도메인으로 통일할 것.
+supabase-js 기본값은 localStorage 라 origin 마다 세션이 따로 논다. 그래서 한때
+`.hypnagogic.xyz` 쿠키 어댑터와 **서브도메인 통일**을 계획했으나, 2026-09-02
+**경로 방식으로 결정을 바꿨다** — 프로젝트를 `hypnagogic.xyz/<path>/` 에 둔다.
+origin 이 하나라 세션이 저절로 공유되고, 어댑터도 서브도메인 통일도 필요 없다.
+
+절차와 규칙은 `docs/joining.md`. 레퍼런스 구현은 foodie-map
+(`/tools/foodiemap/`). 서브도메인은 쓰지 않는다.
 
 ### 8. 배포
 

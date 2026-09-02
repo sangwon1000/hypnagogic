@@ -6,7 +6,10 @@
 규칙을 알고 작업할 수 있다.
 
 - 인스턴스: Hetzner `server01` (168.119.175.141) 의 `/root/supabase`
-- API: `https://supabase.ridgelinehk.com`
+- API: `https://auth.hypnagogic.xyz` — 구 `supabase.ridgelinehk.com` 도 같은 Kong 을
+  가리키지만 **클라이언트는 반드시 전자를 쓴다.** supabase-js 가 세션 저장 키를
+  이 호스트에서 유도하므로, 갈라 쓰면 같은 DB 인데 로그인이 프로젝트마다
+  따로 논다 (`docs/joining.md`)
 - Studio: 같은 주소 `/project/default` (Kong basic auth)
 - 첫 입주자이자 레퍼런스 구현: Ridgeline HK (`hk_trails` 스키마)
 
@@ -110,7 +113,8 @@ create policy "own writes" on your_app.notes for all
 
 ```bash
 # /root/supabase/docker/.env
-PGRST_DB_SCHEMAS=public,storage,graphql_public,hk_trails,your_app
+# 반드시 현재 값을 읽어 뒤에 덧붙인다 — 통째로 갈아끼우면 남의 스키마가 내려간다
+PGRST_DB_SCHEMAS=public,storage,graphql_public,hk_trails,portfolio,foodie_map,your_app
 ```
 
 ```bash
