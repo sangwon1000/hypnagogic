@@ -11,6 +11,9 @@
 (function () {
   'use strict';
 
+  /* 자산 기준점 — ambient.js 와 같은 방식. 방이 /room/ 으로 옮겨져도 필름은 제 자리를 안다 */
+  var BASE = document.currentScript.src.replace(/[^/]*$/, '');
+
   var IMG_W = 3840, IMG_H = 2160;
 
   /* 스틸 속 '방 상자' — 나무 끝에서 마루 그림자까지. 카메라(레이아웃)는 이 상자만 지킨다 */
@@ -38,7 +41,7 @@
      화면 최장변이 1100 CSS px 미만이면 1080p 판을 쓴다(폰만 걸리고 태블릿·데스크톱은 4K).
      패치는 원래 작아 한 벌로 족하다 — 어차피 퍼센트로 앉으니 해상도는 선명함에만 관여한다. */
   var SMALL = Math.max(screen.width, screen.height) < 1100;
-  function film(name, v) { return 'assets/' + name + (SMALL ? '_1080' : '') + '.mp4?v=' + v; }
+  function film(name, v) { return BASE + name + (SMALL ? '_1080' : '') + '.mp4?v=' + v; }
 
   /* ── 필름 두 롤이 방의 전부 — fwd(낮→밤)가 정지 화면까지 맡고, rev(밤→낮)는 전환에만 나온다 ── */
   function mkVid(src) {
@@ -61,7 +64,7 @@
   var fwd = mkVid(film('day2night', 6));
   /* 정지 화면 한 장 — 필름이 안 풀리는 기기(iOS 저전력 모드 등)에서 방을 대신 세우고,
      풀리는 기기에서는 첫 프레임이 올 때까지의 빈 순간을 메운다. 테마에 맞는 장으로. */
-  fwd.setAttribute('poster', 'assets/still_' +
+  fwd.setAttribute('poster', BASE + 'still_' +
     (document.documentElement.dataset.theme === 'night' ? 'night' : 'day') + '.jpg?v=1');
   fwd.setAttribute('role', 'img');
   fwd.setAttribute('aria-label', 'a meditation room on a wooden deck, wrapped in a banyan tree');
@@ -288,7 +291,7 @@
   function loadTick() {
     if (tickLoading) return;
     tickLoading = true;
-    fetch('assets/hover.mp3?v=1')
+    fetch(BASE + 'hover.mp3?v=1')
       .then(function (r) { return r.arrayBuffer(); })
       .then(function (b) { tickRaw = b; tickDecode(); })
       .catch(function () {});
