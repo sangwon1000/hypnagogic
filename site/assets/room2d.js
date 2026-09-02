@@ -51,6 +51,13 @@
     frame.appendChild(v);
     return v;
   }
+  /* iOS는 preload를 자주 무시한다(fwd에서 실제로 겪은 데드락) — muted+playsinline 발길질로
+     제스처 없이도 데이터를 부른다. 방을 열자마자 세 롤 다 걷어차 둬야 나중에 처음 쓰이는
+     순간(첫 밤낮 전환, 첫 반딧불)에 기다리지 않는다 */
+  function kick(v) {
+    var p = v.play();
+    if (p && p.then) p.then(function () { v.pause(); }, function () {});
+  }
   var fwd = mkVid(film('day2night', 6));
   /* 정지 화면 한 장 — 필름이 안 풀리는 기기(iOS 저전력 모드 등)에서 방을 대신 세우고,
      풀리는 기기에서는 첫 프레임이 올 때까지의 빈 순간을 메운다. 테마에 맞는 장으로. */
@@ -109,7 +116,6 @@
   function hoverOn(h) {
     if (hovered === h) return;
     hovered = h;
-    if (h.act === 'bowl') loadPatches();           // 볼에 커서가 닿는 순간 — 클릭보다 한 발 먼저 싣는다
     tick();                                        // 딸깍 — 명패 등장음
     showPlate(h);
   }
@@ -210,7 +216,7 @@
     v.muted = true;
     v.setAttribute('muted', '');
     v.setAttribute('playsinline', '');
-    v.preload = 'none';                            // 방 필름 먼저 — 패치는 한가할 때 몰래 싣는다
+    v.preload = 'none';                            // loadPatches()가 방이 열리는 동안 바로 올린다
     v.src = src;
     v.hidden = true;
     v.setAttribute('aria-hidden', 'true');
@@ -245,7 +251,6 @@
       }, function () {});
     });
   }
-  addEventListener('am-ready', function () { setTimeout(function () { loadPatches(); loadTick(); }, 2500); }, { once: true });
   function bowlHide() {
     [bowlN, bowlD].forEach(function (v) {
       v.__strike = false;
@@ -255,6 +260,9 @@
   }
 
   var audioCtx = null;
+  /* 미리 만들어 둔다 — 생성엔 제스처가 필요 없다(정지 상태로 시작할 뿐), decode도 정지 상태에서
+     된다. 제스처가 필요한 건 소리를 내는 resume() 뿐이라, 그때는 이미 다 실려 있다 */
+  try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
   function strikeBowl(delay) {                     // delay(초) — 필름 속 타격 순간에 소리를 건다
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
@@ -584,12 +592,17 @@
     fwd.addEventListener('loadedmetadata', boot, { once: true });  // iOS는 여기까지만 오는 일이 잦다
     setTimeout(boot, 3000);                                        // 그마저 없으면 시간이 연다
   }
-  /* 데이터 호출용 발길질 — muted+playsinline이라 iOS도 허용한다(저전력 모드면 거절, 그땐 poster가 받는다) */
-  (function kick() {
-    var p = fwd.play();
-    if (p && p.then) p.then(function () { fwd.pause(); }, function () {});
-  })();
+  /* 발길질은 여기서 셋 다 — DOM에 다 붙고 관문 리스너도 걸린 뒤라야 안전하다
+     (fwd에서 검증된 자리; rev·ff를 방 만들 때 바로 걷어차 봤더니 그때는 frame이 아직
+     문서에 안 붙어 있어 iOS가 변덕스러울 자리였다) */
+  kick(fwd); kick(rev); kick(ff);
   fwd.addEventListener('error', fireReady);       // 필름이 없어도 방문은 이어진다 — 마당색 위에서
+
+  /* ── 전부 처음부터 — 볼 패치도, 똑딱 소리도 방이 열리는 동안 함께 실린다.
+     이제 패치 두 장(30~55KB)·똑딱(7.5KB) 다 이 크기라 방 필름과 경합할 무게가 아니다.
+     호버든 첫 종이든, 실제로 쓰일 때는 이미 다 실려 있어 기다릴 일이 없다 ── */
+  loadPatches();
+  loadTick();
 
   /* ── session.js가 빌리는 몸 — 3D 시절과 같은 이름들 ── */
   window.__am = {

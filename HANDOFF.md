@@ -16,6 +16,7 @@
 - ✅ **OAuth 새 이름 전환(09-01 저녁)**: 새 구글 클라우드 프로젝트+클라이언트(640124335221-…), `GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI`+`API_EXTERNAL_URL`→auth.hypnagogic.xyz. 크리덴셜은 docker-compose.yml 하드코딩(.env 구글 변수는 하이픈 오타로 죽은 값). 백업 `.bak-preoauth` + `/root/backups/*-pre-oauth-swap.sql`
 - ✅ **모바일 3연타(09-01 밤, v17→v19)**: ①1080p 경량 필름(`*_1080.mp4`, screen 최장변<1100) ②iOS 부팅 데드락 해결 — loadeddata만 기다리던 관문을 3갈래(+metadata+3s)+play 발길질+poster로 ③세로모드 복구(배율 `min(cover, fit)`+가운데 정렬, 데스크톱 무변경)·픽커 배경 클릭 탈출
 - ✅ **볼 패치 1080판(09-02, v20)**: 아이폰에서 말렛 칠 때 네모 상자 깜빡임 — 원인 둘: 1080 필름 위 4K 패치는 GPU 축소 배율이 달라(3.4:1 vs 6.9:1) 상자가 드러나고, iOS는 재생이 서기 전의 비디오를 검은 상자로 그림. 처방: `bowl_*_1080.mp4`(필름과 같은 bicubic 1080 격자에서 크롭, 블록 YMAX 5/3 통과) + 패치도 `film()` 선택 + 숨은 워밍업 킥(play→pause) + 재생 성립 후에만 unhide(`__strike` 가드)
+- ✅ **전부 처음부터 싣는다(09-02, v21)**: "한번 로딩되면 절대 기다릴 일 없게" 요청으로 남은 지연 로딩을 걷어냄. rev(밤→낮 롤)·반딧불이 fwd와 달리 iOS 발길질(kick)을 못 받고 있었던 걸 발견해 셋 다 같은 자리(DOM 완전 부착 후)에서 `kick(fwd); kick(rev); kick(ff);`로 통일. 볼 패치·똑딱 소리는 호버·2.5초 지연 트리거를 없애고 방이 열리자마자 `loadPatches(); loadTick();`로 즉시 로딩(둘 다 수십 KB라 방 필름과 무게 경합 없음). AudioContext도 제스처 없이 미리 생성(정지 상태로 시작 가능, decode는 정지 상태에서도 됨 — 제스처는 resume()에만 필요). 데스크톱·모바일 에뮬레이션 둘 다 페이지 로드 1.2~4초 안에 필름 3개+패치 2개 readyState 4 확인, 콘솔 에러 0.
 
 ## Dokploy 등록 (완료 — 재현/참고용)
 
