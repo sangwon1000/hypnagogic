@@ -30,21 +30,19 @@
   li { border-top: 1px solid var(--line); }
   li:last-child { border-bottom: 1px solid var(--line); }
 
-  /* 이름 폭이 제각각이라 flex 로 두면 설명 시작점이 층이 진다 — 열을 고정한다 */
+  /* 이름 옆에 설명을 세우면 이름 길이가 제각각이라 시작점이 층이 진다. 이름은
+     제 줄을 갖고 설명이 그 아래로 흐르면 폭에 상관없이 왼쪽이 한 줄로 선다. */
   a.item {
     display: grid;
-    grid-template-columns: minmax(0, 9.5em) 1fr auto auto;
+    grid-template-columns: 1fr auto auto;
     align-items: baseline;
-    gap: clamp(12px, 3vw, 28px);
+    column-gap: clamp(12px, 3vw, 24px);
+    row-gap: 7px;
     padding: clamp(16px, 2.6vh, 24px) 0;
     color: #fff; text-decoration: none;
     transition: padding-left .25s ease, color .25s ease;
   }
-  @media (max-width: 640px) {
-    /* 좁아지면 이름 아래로 설명이 흐르고, 꼬리표는 이름 옆에 남는다 */
-    a.item { grid-template-columns: 1fr auto auto; row-gap: 6px; }
-    .desc { grid-column: 1 / -1; }
-  }
+  .desc { grid-column: 1 / -1; }
   a.item:hover { padding-left: 12px; }
   a.item:hover .name { color: #fff; }
   a.item:hover .arrow { opacity: 1; transform: translateX(0); }
@@ -69,30 +67,30 @@
   <li>
     <a class="item" href="/tools/foodiemap/">
       <span class="name">foodie map</span>
-      <span class="desc">28,000 restaurants from the shows and guides we actually watch</span>
       <span class="tag">invite only</span>
       <span class="arrow">&rarr;</span>
+      <span class="desc">28,000 restaurants from the shows and guides we actually watch</span>
     </a>
   </li>
   <li>
     <a class="item" href="https://ridgelinehk.com" rel="noopener">
       <span class="name">Ridgeline</span>
-      <span class="desc">Hong Kong&rsquo;s hiking trail map &mdash; 9,000+ routes</span>
       <span class="arrow">&rarr;</span>
+      <span class="desc">Hong Kong&rsquo;s hiking trail map &mdash; 9,000+ routes</span>
     </a>
   </li>
   <li>
     <a class="item" href="https://esperfinance.com" rel="noopener">
       <span class="name">Esper</span>
-      <span class="desc">Honestly simple personal finance</span>
       <span class="arrow">&rarr;</span>
+      <span class="desc">Honestly simple personal finance</span>
     </a>
   </li>
   <li>
     <a class="item" href="https://analytics.thousandlab.duckdns.org" rel="noopener">
       <span class="name">web analytics</span>
-      <span class="desc">Privacy-first, self-hosted</span>
       <span class="arrow">&rarr;</span>
+      <span class="desc">Privacy-first, self-hosted</span>
     </a>
   </li>
 </ul>
