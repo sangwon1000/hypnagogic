@@ -10,11 +10,14 @@ function clock(){var h=new Date().getHours();return(h>=6&&h<19)?'day':'night'}
 function apply(){var ov=null;try{ov=localStorage.getItem('am-theme-override')}catch(e){}
 var c=clock();if(ov===c){try{localStorage.removeItem('am-theme-override')}catch(e){}ov=null}
 document.documentElement.dataset.theme=ov||c}
-apply();addEventListener('storage',function(e){if(e.key==='am-theme-override')apply()});setInterval(apply,60000)})()</script>
+apply();addEventListener('storage',function(e){if(e.key==='am-theme-override')apply()});setInterval(apply,60000)
+/* 작은 화면 표식 — 폰에서는 필름 바깥이 극장처럼 검다, 낮이든 밤이든.
+   첫 페인트 전에 걸어야 로딩 한 장부터 검게 뜬다. room2d.js 의 SMALL 과 같은 잣대 */
+if(Math.max(screen.width,screen.height)<1100)document.documentElement.dataset.small='1'})()</script>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=DM+Mono:wght@300;400;500&amp;family=DM+Sans:wght@300;400;500&amp;display=swap">
-<link rel="stylesheet" href="../assets/style.css?v=24">
+<link rel="stylesheet" href="../assets/style.css?v=25">
 <style>
   html, body { height: 100%; overflow: hidden; }
   /* 마당 — 4K 스틸의 backdrop 핑크와 한 몸 (렌더 실측 #E6CBC4) */
@@ -26,11 +29,35 @@ apply();addEventListener('storage',function(e){if(e.key==='am-theme-override')ap
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
     transition: opacity 0.7s ease, background 0.5s ease; }
   [data-theme="night"] .load { background: var(--paper); }
+
+  /* 폰 — 필름 바깥은 극장처럼 검다. 로딩 한 장도 같은 검정에서 열리고,
+     그 위의 글씨는 밤의 것을 빌려 입는다(변수를 여기서 다시 매면 자식이 따라온다) */
+  [data-small] body, [data-small] .load { background: #000; }
+  [data-small] .load {
+    --ink2: #97907E;
+    --hair: rgba(229, 223, 208, 0.20);
+    --seal: #C94D2F;
+  }
   .load.out { opacity: 0; pointer-events: none; }
   .load .l-txt { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: var(--ink2); }
   .load .l-rail { width: 200px; height: 1px; background: var(--hair); }
   .load .l-rail i { display: block; height: 100%; background: var(--seal); transform-origin: left; transform: scaleX(0); }
   .load .l-pct { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--ink2); font-variant-numeric: tabular-nums; }
+
+  /* 폰으로 든 손님에게 거는 한마디 — 방은 넓게 지어졌다고. 한 번 접으면 다시 안 뜬다 */
+  .wide[hidden] { display: none; }
+  .wide { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.5s ease; }
+  .wide.in { opacity: 1; }
+  .wide-back { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.74); }
+  .wide-card { position: relative; margin: 0 26px; max-width: 320px; padding: 20px 21px 17px;
+    display: flex; flex-direction: column; gap: 11px; border-radius: 12px;
+    background: var(--s3-raised); border: 1px solid var(--s3-raised-line); }
+  .wide-eyebrow { font: 400 9.5px/1 var(--s3-mono); letter-spacing: 0.22em; text-transform: uppercase; color: var(--s3-ink45); }
+  .wide-txt { font: 400 12.5px/1.65 var(--s3-mono); color: var(--s3-ink70); }
+  .wide-ok { align-self: flex-start; margin-top: 3px; padding: 8px 15px; border-radius: 8px;
+    background: none; border: 1px solid var(--s3-line); color: var(--s3-ink70);
+    font: 400 10.5px/1 var(--s3-mono); }
 </style>
 </head>
 <body>
@@ -64,6 +91,33 @@ apply();addEventListener('storage',function(e){if(e.key==='am-theme-override')ap
       setTimeout(function(){box.remove()},1150);
     }
   },50);
+})()</script>
+
+<div class="wide" id="amWide" role="dialog" aria-labelledby="amWideTxt" hidden>
+  <div class="wide-back"></div>
+  <div class="wide-card">
+    <div class="wide-eyebrow">before you come in</div>
+    <p class="wide-txt" id="amWideTxt">the room was built wide. on a phone you see it
+      through a letterbox — a desktop opens the whole of it.</p>
+    <button type="button" class="wide-ok">come in anyway</button>
+  </div>
+</div>
+<script>(function(){
+  /* 폰에서만, 그리고 한 번만 — 접은 기억은 브라우저가 들고 있는다 */
+  if(document.documentElement.dataset.small!=='1')return;
+  try{if(localStorage.getItem('am-wide-notice'))return}catch(e){}
+  var box=document.getElementById('amWide'),shown=false;
+  function show(){if(shown)return;shown=true;box.hidden=false;
+    requestAnimationFrame(function(){box.classList.add('in')})}
+  function hide(){box.classList.remove('in');
+    setTimeout(function(){box.hidden=true},550);
+    try{localStorage.setItem('am-wide-notice','1')}catch(e){}}
+  /* 방이 열리고 한 박자 뒤에 — 로딩 한 장과 겹치지 않게. 필름이 끝내 안 풀려도 말은 건넨다 */
+  if(document.documentElement.dataset.amReady)setTimeout(show,1400);
+  else addEventListener('am-ready',function(){setTimeout(show,1400)},{once:true});
+  setTimeout(show,9500);
+  box.querySelector('.wide-ok').addEventListener('click',hide);
+  box.querySelector('.wide-back').addEventListener('click',hide);
 })()</script>
 
 <script src="../assets/ambient.js?v=5"></script>

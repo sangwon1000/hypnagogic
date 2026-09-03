@@ -99,6 +99,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--seal); outline-
 /* 세로 화면에서 필름 위아래로 남는 자리 — 필름 가장자리 실측색이라 이음새가 눈에 안 걸린다
    (낮 #E8CEC6 ≈ 위 #e6cbc4 / 밤은 필름 밤하늘 #06050A~#130C0D 사이) */
 [data-theme="night"] .scene { background: #0a0809; }
+/* 폰에서는 그 자리가 넓다 — 세로로 들면 필름 위아래로 화면의 3분의 2가 남는다.
+   그 넓이를 마당색으로 채우면 방이 사진 한 장처럼 떠 버리므로, 극장처럼 검게 둔다
+   (낮이든 밤이든. 표식은 room/index.html 의 머리 스크립트가 첫 페인트 전에 건다) */
+[data-small] .scene { background: #000; }
 
 /* 세로 화면 — 방은 16:9로 누운 필름이라 커버로는 다 안 들어온다. layout()이 방이
    통째로 보이는 배율까지 물러서고, 위아래 남는 자리는 위 .scene 의 마당색이 받는다 */
@@ -224,7 +228,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--seal); outline-
   --s3-tip-bg: rgba(38, 30, 26, 0.92);
   --s3-tip-ink: #f0ece2;
 }
-[data-theme="night"] {
+/* 폰은 낮에도 밤의 옷을 입는다 — 필름 바깥이 검으니 그 위에 서는 세션 UI(칩·픽커·
+   기록)도 먹지 위의 색이라야 읽힌다. 필름 위에 서는 명패만은 낮의 옷 그대로다
+   (아래 [data-theme="night"] .plate3d 는 이 목록과 별개라 밤에만 걸린다) */
+[data-theme="night"], [data-small] {
   --s3-bg: #26211c;
   --s3-bg-r: 38, 33, 28;
   --s3-scrim-r: 22, 21, 16;
@@ -330,6 +337,12 @@ body[data-s3="sitting"] .scene { filter: saturate(0.85); }
 }
 .s3-chip:hover { border-color: var(--s3-line-hover); }
 .s3-chip[aria-pressed="true"] { background: var(--s3-fill); border-color: var(--s3-fill); color: var(--s3-on-fill); }
+
+/* 폰에서 가로로 들면 이 줄이 필름을 반쯤 밟는다 — 밝은 마당 위에서도 읽히게
+   검은 판을 하나 깔아 준다(세로에서는 어차피 검은 여백 위라 티가 안 난다) */
+[data-small] .s3-chip { background: rgba(6, 5, 8, 0.55); }
+[data-small] .s3-chip[aria-pressed="true"] { background: var(--s3-fill); }
+[data-small] .s3-home { text-shadow: 0 0 3px rgba(6, 5, 8, 0.75), 0 1px 12px rgba(6, 5, 8, 0.95); }
 
 /* ── 현관으로 나가는 길 — 좌측 상단 워드마크. 칩 줄의 거울이라 박자를 같이 탄다 ── */
 .s3-home {
