@@ -1,6 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="16" fill="#0b0d17"/>
-  <rect x="35" y="33" width="44" height="44" fill="#ff2d78" opacity="0.75"/>
-  <rect x="21" y="23" width="44" height="44" fill="#00e5ff" opacity="0.75"/>
-  <rect x="28" y="28" width="44" height="44" fill="#eef2ff"/>
+  <!-- vesica piscis — 두 원의 중심 거리가 반지름과 같다(d = r).
+       각 원의 둘레가 상대의 중심을 지나고, 겹친 렌즈의 가로:세로가 √3:1 로 떨어진다.
+       전체는 2:3 이라 정사각 캔버스에서 세로를 꽉 채우고 가로는 67% 만 쓴다 —
+       그 손해를 메우려고 획을 10 까지 올렸다. 16px 에서 렌즈가 닫히지 않는 마지막 두께.
+       기하: 여백 2 → 3r + 획 = 96 → r = 28.667 -->
+  <style>
+    .m { fill: none; stroke: #0a0a0a; stroke-width: 10; }
+    @media (prefers-color-scheme: dark) { .m { stroke: #f2f2f2; } }
+  </style>
+  <g class="m">
+    <circle cx="50" cy="35.667" r="28.667"/>
+    <circle cx="50" cy="64.333" r="28.667"/>
+  </g>
 </svg>
