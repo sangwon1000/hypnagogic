@@ -46,6 +46,10 @@
 
 * { box-sizing: border-box; }
 html { background: var(--paper); }
+/* 손끝의 회색 그림자 — iOS 사파리는 눌린 것 위에 반투명 회색(-webkit-tap-highlight-color)을 한 겹 얹는데,
+   그 모양은 물건이 아니라 물건의 바운딩 박스, 즉 직사각형이다(핫스팟 폴리곤·뒷막·칩 모두). 물건은 명패로,
+   칩은 제 눌림색으로 답하니 시스템 것은 끈다. 상속되는 속성이라 여기 한 번이면 SVG 안까지 닿는다 */
+html { -webkit-tap-highlight-color: transparent; }
 body {
   margin: 0;
   background: var(--paper);

@@ -246,8 +246,8 @@
     v.addEventListener('error', function () { v.hidden = true; });
     return v;
   }
-  var bowlN = mkPatch(film('bowl_night', 3));
-  var bowlD = mkPatch(film('bowl_day', 3));
+  var bowlN = mkPatch(film('bowl_night', 4));
+  var bowlD = mkPatch(film('bowl_day', 4));
   var patchesLoaded = false;
   function loadPatches() {
     if (patchesLoaded) return;
