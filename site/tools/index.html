@@ -4,165 +4,88 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>hypnagogic — tools</title>
+<meta name="description" content="Things I built and still use.">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@200;300;400&amp;display=swap">
 <style>
-  /* 초대받은 사람만 드는 방. 문을 열기 전까지는 목록도 보이지 않는다. */
+  /* 목록 하나. 문은 각자 알아서 지킨다 — 여긴 아무것도 잠그지 않는다. */
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  :root { --gut: clamp(26px, 8vw, 96px); --dim: rgba(255,255,255,0.42); }
-  html, body { height: 100%; }
+  :root { --gut: clamp(26px, 8vw, 96px); --dim: rgba(255,255,255,0.42); --line: rgba(255,255,255,0.16); }
+  html { height: 100%; }
   body {
+    min-height: 100%;
     background: #000; color: #fff;
     font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
     display: flex; flex-direction: column; justify-content: center;
-    padding-left: var(--gut); padding-right: var(--gut); overflow: hidden;
+    padding: clamp(96px, 18vh, 160px) var(--gut) clamp(56px, 12vh, 96px);
   }
   .mark { position: fixed; top: clamp(28px, 4.5vh, 46px); left: var(--gut);
     font-size: 15px; font-weight: 300; letter-spacing: 0.26em; color: #fff; text-decoration: none; }
   h1 { font-size: clamp(2.1rem, 7.4vw, 6rem); font-weight: 200; line-height: 1.16;
     letter-spacing: 0.005em; text-transform: uppercase; }
-  p.note { margin-top: 1.6em; font-size: 14px; font-weight: 300; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--dim); }
-  .row { margin-top: 2.2em; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  button, input {
-    font-family: inherit; font-size: 13px; font-weight: 300; letter-spacing: 0.16em;
-    text-transform: uppercase; color: #fff; background: transparent;
-    border: 1px solid rgba(255,255,255,0.42); border-radius: 999px;
-    padding: 11px 22px; outline: none;
+
+  ul { list-style: none; margin-top: clamp(2em, 6vh, 3.4em); max-width: 760px; }
+  li { border-top: 1px solid var(--line); }
+  li:last-child { border-bottom: 1px solid var(--line); }
+
+  a.item {
+    display: flex; align-items: baseline; gap: clamp(12px, 3vw, 28px); flex-wrap: wrap;
+    padding: clamp(16px, 2.6vh, 24px) 0;
+    color: #fff; text-decoration: none;
+    transition: padding-left .25s ease, color .25s ease;
   }
-  button { cursor: pointer; transition: border-color .2s, background .2s; }
-  button:hover:not(:disabled) { border-color: #fff; background: rgba(255,255,255,0.06); }
-  button:disabled { opacity: .4; cursor: default; }
-  input { letter-spacing: 0.34em; text-align: center; width: 11em; }
-  input:focus { border-color: #fff; }
-  .msg { margin-top: 1.1em; font-size: 12px; letter-spacing: 0.1em; text-transform: none; color: #ff8a6e; }
-  .tools { margin-top: 2.4em; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
-  .tool { display: flex; align-items: baseline; gap: 14px; color: #fff; text-decoration: none;
-    border-bottom: 1px solid rgba(255,255,255,0.18); padding-bottom: 10px; }
-  .tool:hover { border-color: #fff; }
-  .tool b { font-size: clamp(1.2rem, 3.4vw, 1.9rem); font-weight: 300; letter-spacing: 0.02em; }
-  .tool span { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
-  .who { position: fixed; top: clamp(28px, 4.5vh, 46px); right: var(--gut);
-    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim);
-    background: none; border: none; padding: 0; cursor: pointer; }
-  .who:hover { color: #fff; background: none; }
-  [hidden] { display: none !important; }
+  a.item:hover { padding-left: 12px; }
+  a.item:hover .name { color: #fff; }
+  a.item:hover .arrow { opacity: 1; transform: translateX(0); }
+
+  .name { font-size: clamp(1.25rem, 3.6vw, 2.1rem); font-weight: 300; letter-spacing: 0.01em;
+    color: rgba(255,255,255,0.88); transition: color .25s ease; }
+  .desc { flex: 1 1 16em; font-size: 13px; font-weight: 300; letter-spacing: 0.08em;
+    color: var(--dim); }
+  .tag { font-size: 10px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--dim); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
+  .arrow { font-size: 15px; color: var(--dim); opacity: 0; transform: translateX(-6px);
+    transition: opacity .25s ease, transform .25s ease; }
+  @media (hover: none) { .arrow { opacity: 1; transform: none; } }
 </style>
 </head>
 <body>
 <a class="mark" href="/">HYPNAGOGIC</a>
-<button class="who" id="who" hidden></button>
 
-<div id="view-loading"><h1>Tools</h1><p class="note">Checking&hellip;</p></div>
+<h1>Tools</h1>
 
-<div id="view-signedout" hidden>
-  <h1>Invite only</h1>
-  <p class="note">Sign in to continue</p>
-  <div class="row"><button id="signin">Continue with Google</button></div>
-</div>
-
-<div id="view-code" hidden>
-  <h1>Invite code</h1>
-  <p class="note" id="greet"></p>
-  <form class="row" id="form">
-    <input id="code" inputmode="numeric" placeholder="code" aria-label="invite code" autocomplete="off">
-    <button id="enter" type="submit" disabled>Enter</button>
-  </form>
-  <p class="msg" id="msg" hidden></p>
-</div>
-
-<div id="view-in" hidden>
-  <h1>Tools</h1>
-  <div class="tools">
-    <a class="tool" href="/tools/foodiemap/"><b>foodie map</b><span>28,000 restaurants &middot; one map</span></a>
-  </div>
-</div>
-
-<script src="../assets/vendor/supabase-2.js"></script>
-<script>
-(function () {
-  'use strict';
-  var API = 'https://hypnagogic.xyz';
-  var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzc2OTkwNjUyLCJleHAiOjIwOTIzNTA2NTJ9.25ujMBTJaoL7XGpcJ7sUomjkfxMLDkhNaD_7zxSU2No';
-  var sb = window.supabase.createClient(API, ANON, {
-    auth: { flowType: 'pkce' },
-    db: { schema: 'portfolio' },
-  });
-
-  var el = function (id) { return document.getElementById(id); };
-  var views = ['loading', 'signedout', 'code', 'in'];
-  function show(name) {
-    views.forEach(function (v) { el('view-' + v).hidden = v !== name; });
-  }
-
-  var me = null;
-
-  function firstName(u) {
-    var m = u.user_metadata || {};
-    return String(m.name || m.full_name || u.email || 'you').split(/[@\s]/)[0];
-  }
-
-  /* RLS 는 본인 행만 보여준다 — 한 줄이라도 오면 초대된 것 */
-  function checkAccess() {
-    return sb.from('tool_access').select('user_id').limit(1).then(function (r) {
-      return !r.error && r.data && r.data.length > 0;
-    });
-  }
-
-  function route() {
-    if (!me) { el('who').hidden = true; return show('signedout'); }
-    el('who').hidden = false;
-    el('who').textContent = firstName(me) + ' · sign out';
-    checkAccess().then(function (ok) {
-      if (ok) return show('in');
-      el('greet').textContent = 'Hi ' + firstName(me) + ' — one code to get in';
-      show('code');
-    });
-  }
-
-  el('signin').addEventListener('click', function () {
-    sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: location.origin + '/tools/' },
-    });
-  });
-  el('who').addEventListener('click', function () { sb.auth.signOut(); });
-
-  el('code').addEventListener('input', function () {
-    el('enter').disabled = !el('code').value.trim();
-  });
-
-  el('form').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var code = el('code').value.trim();
-    if (!code) return;
-    el('enter').disabled = true;
-    el('msg').hidden = true;
-    /* 코드는 서버에서만 대조된다 — SECURITY DEFINER 함수 */
-    sb.rpc('redeem_invite', { p_code: code }).then(function (r) {
-      el('enter').disabled = false;
-      var d = (r && r.data) || {};
-      if (!r.error && d.ok) return show('in');
-      el('msg').hidden = false;
-      el('msg').textContent = d.reason === 'locked'
-        ? 'Too many tries — ask whoever invited you.'
-        : d.reason === 'bad_code'
-          ? 'That code is not right' + (d.left != null ? ' — ' + d.left + ' left' : '')
-          : 'Something went wrong. Try again?';
-    });
-  });
-
-  sb.auth.onAuthStateChange(function (_ev, session) {
-    me = session ? session.user : null;
-    route();
-  });
-  sb.auth.getSession().then(function (r) {
-    me = r.data.session ? r.data.session.user : null;
-    route();
-  });
-})();
-</script>
+<ul>
+  <li>
+    <a class="item" href="/tools/foodiemap/">
+      <span class="name">foodie map</span>
+      <span class="desc">28,000 restaurants from the shows and guides we actually watch</span>
+      <span class="tag">invite only</span>
+      <span class="arrow">&rarr;</span>
+    </a>
+  </li>
+  <li>
+    <a class="item" href="https://ridgelinehk.com" rel="noopener">
+      <span class="name">Ridgeline</span>
+      <span class="desc">Hong Kong&rsquo;s hiking trail map &mdash; 9,000+ routes</span>
+      <span class="arrow">&rarr;</span>
+    </a>
+  </li>
+  <li>
+    <a class="item" href="https://esperfinance.com" rel="noopener">
+      <span class="name">Esper</span>
+      <span class="desc">Honestly simple personal finance</span>
+      <span class="arrow">&rarr;</span>
+    </a>
+  </li>
+  <li>
+    <a class="item" href="https://analytics.thousandlab.duckdns.org" rel="noopener">
+      <span class="name">web analytics</span>
+      <span class="desc">Privacy-first, self-hosted</span>
+      <span class="arrow">&rarr;</span>
+    </a>
+  </li>
+</ul>
 </body>
 </html>
