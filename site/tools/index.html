@@ -27,31 +27,26 @@
   h1 { font-size: clamp(2.1rem, 7.4vw, 6rem); font-weight: 200; line-height: 1.16;
     letter-spacing: 0.005em; text-transform: uppercase; }
 
-  ul { list-style: none; margin-top: clamp(2em, 6vh, 3.4em); max-width: 760px; }
-  li { border-top: 1px solid var(--line); }
-  li:last-child { border-bottom: 1px solid var(--line); }
+  ul { list-style: none; margin-top: clamp(2em, 6vh, 3.4em); }
 
-  /* 이름 옆에 설명을 세우면 이름 길이가 제각각이라 시작점이 층이 진다. 이름은
-     제 줄을 갖고 설명이 그 아래로 흐르면 폭에 상관없이 왼쪽이 한 줄로 선다. */
+  /* 줄 사이에 선이 없으므로 이름을 늘려 태그와 화살표를 오른쪽 끝까지 밀면
+     그 사이가 허공이 된다. 행을 내용 폭에 맞춰 왼쪽으로 모아 붙여 둔다. */
   a.item {
     display: grid;
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: auto auto auto;
     align-items: baseline;
     column-gap: clamp(12px, 3vw, 24px);
-    row-gap: 7px;
-    padding: clamp(16px, 2.6vh, 24px) 0;
+    width: max-content; max-width: 100%;
+    padding: clamp(10px, 1.6vh, 16px) 0;
     color: #fff; text-decoration: none;
     transition: padding-left .25s ease, color .25s ease;
   }
-  .desc { grid-column: 1 / -1; }
   a.item:hover { padding-left: 12px; }
   a.item:hover .name { color: #fff; }
   a.item:hover .arrow { opacity: 1; transform: translateX(0); }
 
   .name { font-size: clamp(1.25rem, 3.6vw, 2.1rem); font-weight: 300; letter-spacing: 0.01em;
     color: rgba(255,255,255,0.88); transition: color .25s ease; }
-  .desc { font-size: 13px; font-weight: 300; letter-spacing: 0.08em;
-    color: var(--dim); }
   .tag { font-size: 10px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase;
     color: var(--dim); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
   .arrow { font-size: 15px; color: var(--dim); opacity: 0; transform: translateX(-6px);
@@ -70,28 +65,6 @@
       <span class="name">foodie map</span>
       <span class="tag">invite only</span>
       <span class="arrow">&rarr;</span>
-      <span class="desc">28,000 restaurants from the shows and guides we actually watch</span>
-    </a>
-  </li>
-  <li>
-    <a class="item" href="https://ridgelinehk.com" rel="noopener">
-      <span class="name">Ridgeline</span>
-      <span class="arrow">&rarr;</span>
-      <span class="desc">Hong Kong&rsquo;s hiking trail map &mdash; 9,000+ routes</span>
-    </a>
-  </li>
-  <li>
-    <a class="item" href="https://esperfinance.com" rel="noopener">
-      <span class="name">Esper</span>
-      <span class="arrow">&rarr;</span>
-      <span class="desc">Honestly simple personal finance</span>
-    </a>
-  </li>
-  <li>
-    <a class="item" href="https://analytics.thousandlab.duckdns.org" rel="noopener">
-      <span class="name">web analytics</span>
-      <span class="arrow">&rarr;</span>
-      <span class="desc">Privacy-first, self-hosted</span>
     </a>
   </li>
 </ul>
