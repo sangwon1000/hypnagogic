@@ -30,11 +30,20 @@
   li { border-top: 1px solid var(--line); }
   li:last-child { border-bottom: 1px solid var(--line); }
 
+  /* 이름 폭이 제각각이라 flex 로 두면 설명 시작점이 층이 진다 — 열을 고정한다 */
   a.item {
-    display: flex; align-items: baseline; gap: clamp(12px, 3vw, 28px); flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 9.5em) 1fr auto auto;
+    align-items: baseline;
+    gap: clamp(12px, 3vw, 28px);
     padding: clamp(16px, 2.6vh, 24px) 0;
     color: #fff; text-decoration: none;
     transition: padding-left .25s ease, color .25s ease;
+  }
+  @media (max-width: 640px) {
+    /* 좁아지면 이름 아래로 설명이 흐르고, 꼬리표는 이름 옆에 남는다 */
+    a.item { grid-template-columns: 1fr auto auto; row-gap: 6px; }
+    .desc { grid-column: 1 / -1; }
   }
   a.item:hover { padding-left: 12px; }
   a.item:hover .name { color: #fff; }
@@ -42,7 +51,7 @@
 
   .name { font-size: clamp(1.25rem, 3.6vw, 2.1rem); font-weight: 300; letter-spacing: 0.01em;
     color: rgba(255,255,255,0.88); transition: color .25s ease; }
-  .desc { flex: 1 1 16em; font-size: 13px; font-weight: 300; letter-spacing: 0.08em;
+  .desc { font-size: 13px; font-weight: 300; letter-spacing: 0.08em;
     color: var(--dim); }
   .tag { font-size: 10px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase;
     color: var(--dim); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
