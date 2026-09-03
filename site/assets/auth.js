@@ -6,7 +6,10 @@
   'use strict';
   if (!window.supabase) return;                    // 벤더 스크립트가 없으면 익명 모드로 침묵
 
-  var API = 'https://auth.hypnagogic.xyz';
+  /* 사이트와 같은 오리진으로 API 를 부른다 — Kong 이 hypnagogic.xyz 의
+     /rest/v1 · /auth/v1 도 받는다(허브 compose 의 hyproot 라우터). 같은
+     오리진이라 방(/room)과 도구(/tools)가 세션 하나를 같이 쓴다. */
+  var API = 'https://hypnagogic.xyz';
   var ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzc2OTkwNjUyLCJleHAiOjIwOTIzNTA2NTJ9.25ujMBTJaoL7XGpcJ7sUomjkfxMLDkhNaD_7zxSU2No';
   var TABLE = 'meditation_sessions';
 
