@@ -127,6 +127,14 @@
   }
   function clearHover() { if (hovered) hoverOff(hovered); }
 
+  /* 손가락에는 '떠남'이 없다 — 마우스는 물건 밖으로 미끄러지며 명패를 걷어 가지만,
+     탭은 손을 뗀 뒤에도 그 자리에 머문다(iOS는 다음 탭까지 호버를 붙들고 있다).
+     그래서 물건 바깥을 누르면 명패를 직접 걷는다. 다른 물건을 눌렀다면 그쪽
+     hoverOn이 갈아끼우므로 여기서는 손대지 않는다 */
+  addEventListener('pointerdown', function (e) {
+    if (hovered && !hotmap.contains(e.target)) clearHover();
+  }, { capture: true, passive: true });
+
   function showPlate(h) {
     var sub = h.sub;
     if (h.act === 'music' && musicOn && ytReady) {
@@ -151,10 +159,11 @@
     plate.style.top = (r.top + h.top / IMG_H * r.height - 12) + 'px';
   }
 
-  /* 세션 화면이 방을 덮으면 명패는 걷는다 (핫스팟 자체는 오버레이가 가려 준다) */
+  /* 세션 화면이 방을 덮으면 명패는 걷는다 (핫스팟 자체는 오버레이가 가려 준다).
+     탭으로 방석을 눌러 픽커가 열릴 때도 마찬가지 — 마우스라면 오버레이가 커서 밑에
+     깔리며 pointerleave가 걷어 가지만, 손가락에는 그 '떠남'이 없다 */
   new MutationObserver(function () {
-    var v = document.body.dataset.s3;
-    if (v === 'sitting' || v === 'log') clearHover();
+    if (document.body.dataset.s3 !== 'room') clearHover();
   }).observe(document.body, { attributes: true, attributeFilter: ['data-s3'] });
 
   /* ── 카메라 — 필름이 화면을 가득 덮는다(커버). 브라우저 뷰포트는 16:9가 아니라
