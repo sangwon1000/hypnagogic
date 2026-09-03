@@ -42,6 +42,9 @@
      패치는 원래 작아 한 벌로 족하다 — 어차피 퍼센트로 앉으니 해상도는 선명함에만 관여한다. */
   var SMALL = Math.max(screen.width, screen.height) < 1100;
   function film(name, v) { return BASE + name + (SMALL ? '_1080' : '') + '.mp4?v=' + v; }
+  /* 호버가 없는 기기 — 폰(작은 화면)이거나, 가리키는 것이 머무를 수 없는 기기.
+     여기서는 명패를 아예 세우지 않는다(위 pointerType 검사와 함께 이중으로) */
+  var TOUCH = SMALL || (window.matchMedia && matchMedia('(hover: none)').matches);
 
   /* ── 필름 두 롤이 방의 전부 — fwd(낮→밤)가 정지 화면까지 맡고, rev(밤→낮)는 전환에만 나온다 ── */
   function mkVid(src) {
@@ -102,9 +105,12 @@
     pg.setAttribute('role', 'button');
     pg.setAttribute('tabindex', '0');
     pg.setAttribute('aria-label', h.name + ' — ' + h.sub);
-    pg.addEventListener('pointerenter', function () { hoverOn(h); });
+    /* 손끝에는 호버가 없다 — 탭은 곧 실행이고, 명패는 대답이 아니라 잔상으로 남는다
+       (iOS는 다음 탭까지 호버를 붙들고 있다). 그래서 명패는 마우스·펜에게만 세운다.
+       키보드는 그대로다: :focus-visible 이 탭으로 들어온 초점과 tab 키로 짚은 초점을 갈라 준다 */
+    pg.addEventListener('pointerenter', function (e) { if (e.pointerType !== 'touch') hoverOn(h); });
     pg.addEventListener('pointerleave', function () { hoverOff(h); });
-    pg.addEventListener('focus', function () { hoverOn(h); });
+    pg.addEventListener('focus', function () { if (keyFocus(pg)) hoverOn(h); });
     pg.addEventListener('blur', function () { hoverOff(h); });
     pg.addEventListener('click', function () { act(h); });
     pg.addEventListener('keydown', function (e) {
@@ -116,7 +122,11 @@
   frame.appendChild(hotmap);
   if (/[?&]dev\b/.test(location.search)) frame.classList.add('dev');
 
+  function keyFocus(el) {                          // 키보드로 짚은 초점인가 — 못 가리는 브라우저는 그렇다고 친다
+    try { return el.matches(':focus-visible'); } catch (e) { return true; }
+  }
   function hoverOn(h) {
+    if (TOUCH) return;                             // 폰 — 명패 없이 물건이 제 일로 답한다
     if (hovered === h) return;
     hovered = h;
     tick();                                        // 딸깍 — 명패 등장음
