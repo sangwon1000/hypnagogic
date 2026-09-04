@@ -279,11 +279,19 @@
 
   var audioCtx = null;
   /* 미리 만들어 둔다 — 생성엔 제스처가 필요 없다(정지 상태로 시작할 뿐), decode도 정지 상태에서
-     된다. 제스처가 필요한 건 소리를 내는 resume() 뿐이라, 그때는 이미 다 실려 있다 */
-  try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+     된다. 제스처가 필요한 건 소리를 내는 resume() 뿐이라, 그때는 이미 다 실려 있다.
+     컨텍스트는 사이트에 하나뿐이다 — ambient.js 가 먼저 세워 둔 것을 집어 쓴다.
+     둘을 따로 세우면 iOS 에서 한쪽이 조용해진다 */
+  function mkCtx() {
+    if (!window.__amCtx) {
+      try { window.__amCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+    }
+    return window.__amCtx || null;
+  }
+  audioCtx = mkCtx();
   function strikeBowl(delay) {                     // delay(초) — 필름 속 타격 순간에 소리를 건다
     try {
-      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx = audioCtx || mkCtx();
       if (audioCtx.state === 'suspended') audioCtx.resume();
       var t = audioCtx.currentTime + (delay || 0);
       /* 좌종의 배음렬 f·2.9f·5.4f·8.8f — 쌍마다 살짝 어긋나 맥놀이가 인다 */
@@ -319,8 +327,8 @@
   }
   addEventListener('pointerdown', function () {    // 첫 누름에서 미리 깨워 둔다 — 볼 첫 타의 지연도 사라짐
     try {
-      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
+      audioCtx = audioCtx || mkCtx();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       tickDecode();
     } catch (e) {}
   }, { capture: true, passive: true });
@@ -699,7 +707,12 @@
   }
   fwd.addEventListener('error', fireReady);       // 필름이 없어도 방문은 이어진다 — 마당색 위에서
   setTimeout(openRoom, CEIL);                     // 천장 — 회선이 어떻든 방은 열린다
-  Promise.all(ASSETS.map(grab)).then(openRoom);
+  /* 방 자산 여덟 + 앰비언스 첫 조각(트랙마다 하나) — 소리까지 서고 나서 연다.
+     ambient.js 쪽 약속은 8초 천장을 스스로 갖고 있어 여기서 막히지 않는다 */
+  Promise.all([
+    Promise.all(ASSETS.map(grab)),
+    window.__ambPrimed || Promise.resolve(),
+  ]).then(openRoom);
   report();
 
   /* ── session.js가 빌리는 몸 — 3D 시절과 같은 이름들 ── */
@@ -720,12 +733,7 @@
         title: ytReady && ytPlayer.getVideoData() ? ytPlayer.getVideoData().title : null,
       };
     },
-    amb: function () {
-      var A = window.__ambient;
-      if (!A) return null;
-      var info = function (a) { return { t: a.currentTime, vol: +a.volume.toFixed(3), paused: a.paused, dur: a.duration }; };
-      return { unlocked: A.on(), mode: themeName(), day: info(A.els.day), night: info(A.els.night) };
-    },
+    amb: function () { var A = window.__ambient; return A ? A.stat() : null; },
     ff: function () {
       return { on: ffOn, t: +ff.currentTime.toFixed(2), paused: ff.paused,
         opacity: getComputedStyle(ff).opacity, err: ff.error ? ff.error.code : null };
