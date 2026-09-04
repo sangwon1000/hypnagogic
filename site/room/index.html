@@ -73,13 +73,14 @@ if(Math.max(screen.width,screen.height)<1100)document.documentElement.dataset.sm
 </div>
 <script>(function(){
   var box=document.getElementById('amLoad'),pct=document.getElementById('amLoadPct'),fill=document.getElementById('amLoadFill');
-  var t0=Date.now(),target=12,prog=0,done=false;
-  /* 진짜 신호로 차오른다: 페이지 로드 86 → 씬 첫 프레임(am-ready) 100. 나머지는 숨 고르기 */
-  addEventListener('load',function(){target=Math.max(target,86)});
+  var t0=Date.now(),target=5,prog=0,done=false;
+  /* 진짜 바이트로 차오른다 — 방을 이루는 것 전부를 끝까지 받는 동안의 비율(am-progress).
+     다 받고 첫 프레임까지 디코드되면 am-ready 가 100 을 채운다. 숨 고르기는 없다:
+     이 막대가 다 차면 방 안에서 더 받을 것이 남아 있지 않다 */
+  addEventListener('am-progress',function(e){target=Math.max(target,4+e.detail*94)});
   addEventListener('am-ready',function(){target=100});
   if(document.documentElement.dataset.amReady)target=100;
-  setTimeout(function(){target=Math.max(target,68)},800);
-  setTimeout(function(){target=100},8000); /* 안전핀 — 회선이 어떻든 마당은 열린다 */
+  setTimeout(function(){target=100},52000); /* 안전핀 — 회선이 죽어도 마당은 열린다(room2d 천장 45s 뒤) */
   var iv=setInterval(function(){
     prog=Math.min(target,prog+(target-prog)*0.14+0.15);
     pct.textContent=Math.floor(prog)+'%';
@@ -115,13 +116,13 @@ if(Math.max(screen.width,screen.height)<1100)document.documentElement.dataset.sm
   /* 방이 열리고 한 박자 뒤에 — 로딩 한 장과 겹치지 않게. 필름이 끝내 안 풀려도 말은 건넨다 */
   if(document.documentElement.dataset.amReady)setTimeout(show,1400);
   else addEventListener('am-ready',function(){setTimeout(show,1400)},{once:true});
-  setTimeout(show,9500);
+  setTimeout(show,53000);
   box.querySelector('.wide-ok').addEventListener('click',hide);
   box.querySelector('.wide-back').addEventListener('click',hide);
 })()</script>
 
 <script src="../assets/ambient.js?v=6"></script>
-<script src="../assets/room2d.js?v=24" defer></script>
+<script src="../assets/room2d.js?v=25" defer></script>
 <script src="../assets/session.js?v=9" defer></script>
 <script src="../assets/vendor/supabase-2.js" defer></script>
 <script src="../assets/auth.js?v=2" defer></script>

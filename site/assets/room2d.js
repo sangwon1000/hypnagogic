@@ -47,15 +47,14 @@
   var TOUCH = SMALL || (window.matchMedia && matchMedia('(hover: none)').matches);
 
   /* ── 필름 두 롤이 방의 전부 — fwd(낮→밤)가 정지 화면까지 맡고, rev(밤→낮)는 전환에만 나온다 ── */
-  function mkVid(src) {
+  function mkVid() {
     var v = document.createElement('video');
     v.muted = true;
     v.setAttribute('muted', '');
     v.setAttribute('playsinline', '');
     v.preload = 'auto';
-    v.src = src;
     frame.appendChild(v);
-    return v;
+    return v;                                      // src 는 미리 싣기가 끝난 뒤 blob 으로 물린다
   }
   /* iOS는 preload를 자주 무시한다(fwd에서 실제로 겪은 데드락) — muted+playsinline 발길질로
      제스처 없이도 데이터를 부른다. 방을 열자마자 세 롤 다 걷어차 둬야 나중에 처음 쓰이는
@@ -64,20 +63,18 @@
     var p = v.play();
     if (p && p.then) p.then(function () { v.pause(); }, function () {});
   }
-  var fwd = mkVid(film('day2night', 6));
+  var fwd = mkVid();
   /* 정지 화면 한 장 — 필름이 안 풀리는 기기(iOS 저전력 모드 등)에서 방을 대신 세우고,
      풀리는 기기에서는 첫 프레임이 올 때까지의 빈 순간을 메운다. 테마에 맞는 장으로. */
-  fwd.setAttribute('poster', BASE + 'still_' +
-    (document.documentElement.dataset.theme === 'night' ? 'night' : 'day') + '.jpg?v=1');
   fwd.setAttribute('role', 'img');
   fwd.setAttribute('aria-label', 'a meditation room on a wooden deck, wrapped in a banyan tree');
-  var rev = mkVid(film('night2day', 6));
+  var rev = mkVid();
   rev.hidden = true;
   rev.setAttribute('aria-hidden', 'true');
   /* 셋째 롤 — 반딧불. 검은 배경에 빛점만 있는 5초 루프를 screen 블렌드로 겹친다.
      밤낮 필름과 같은 카메라로 찍어 홀드아웃 재단까지 픽셀이 맞고,
      등장·퇴장은 렌더가 아니라 여기 페이드가 맡는다 */
-  var ff = mkVid(film('fireflies', 3));
+  var ff = mkVid();
   ff.classList.add('ff');
   ff.loop = true;
   ff.setAttribute('aria-hidden', 'true');
@@ -233,13 +230,12 @@
      잘라낸 1080 패치라야 픽셀이 한 몸이 된다. */
   var PATCH = { x: 1280, y: 1504, w: 352, h: 304 };
 
-  function mkPatch(src) {
+  function mkPatch() {
     var v = document.createElement('video');
     v.muted = true;
     v.setAttribute('muted', '');
     v.setAttribute('playsinline', '');
-    v.preload = 'none';                            // loadPatches()가 방이 열리는 동안 바로 올린다
-    v.src = src;
+    v.preload = 'auto';
     v.hidden = true;
     v.setAttribute('aria-hidden', 'true');
     v.style.inset = 'auto';                        // 제네릭 video 규칙(inset:0 전면)에서 빠져나온다
@@ -256,8 +252,8 @@
     v.addEventListener('error', function () { v.hidden = true; });
     return v;
   }
-  var bowlN = mkPatch(film('bowl_night', 4));
-  var bowlD = mkPatch(film('bowl_day', 4));
+  var bowlN = mkPatch();
+  var bowlD = mkPatch();
   var patchesLoaded = false;
   function loadPatches() {
     if (patchesLoaded) return;
@@ -597,34 +593,114 @@
     var p = fwd.play();
     if (p) p.catch(arrive);
   }
-  /* ── 관문을 여는 세 갈래 ──
-     iOS 사파리는 preload를 자주 무시한다. 데이터가 안 오면 loadeddata도 없고,
-     그것만 기다리는 관문은 영영 안 열린다 (실제로 아이폰에서 방이 안 떴다).
-     그래서 ① 재생을 한 번 걷어차 데이터를 부르고 ② metadata·시간제한도 관문을 열게 하고
-     ③ 그래도 필름이 안 풀리면 poster(정지 화면)가 방을 대신 세운다. */
-  var booted = false;
-  function boot() {
-    if (booted) return;
-    booted = true;
-    firstFrame();
-  }
-  if (fwd.readyState >= 2) boot();
-  else {
-    fwd.addEventListener('loadeddata', boot, { once: true });
-    fwd.addEventListener('loadedmetadata', boot, { once: true });  // iOS는 여기까지만 오는 일이 잦다
-    setTimeout(boot, 3000);                                        // 그마저 없으면 시간이 연다
-  }
-  /* 발길질은 여기서 셋 다 — DOM에 다 붙고 관문 리스너도 걸린 뒤라야 안전하다
-     (fwd에서 검증된 자리; rev·ff를 방 만들 때 바로 걷어차 봤더니 그때는 frame이 아직
-     문서에 안 붙어 있어 iOS가 변덕스러울 자리였다) */
-  kick(fwd); kick(rev); kick(ff);
-  fwd.addEventListener('error', fireReady);       // 필름이 없어도 방문은 이어진다 — 마당색 위에서
+  /* ── 미리 싣기 — 문이 열린 뒤에는 네트워크가 없다 ──
+     방을 이루는 것 전부(필름 셋 · 볼 패치 둘 · 정지 화면 둘 · 똑딱)를 바이트 끝까지
+     받아 두고, 받은 그것을 blob 으로 물린다. 주소로 물리지 않는 이유가 셋이다.
+       ① 열린 뒤에 다시 받으러 나가는 일이 없다 — 첫 밤전환도 첫 반딧불도 첫 종도.
+       ② iOS 가 preload 를 무시해도 소용이 없다. 데이터는 이미 손에 있다.
+          (그것만 기다리던 옛 관문이 아이폰에서 안 열렸던 바로 그 자리다.)
+       ③ Range 를 안 주는 서버에서도 끝까지 시크된다 — 밤으로 여는 길이 첫 판에 앉는다.
+     회선이 죽어도 방은 열려야 한다. 천장에 닿으면 받은 것은 blob 으로, 못 받은 것은
+     원래 주소로 물리고 연다 — 그 경우에만 예전처럼 방이 열린 뒤에도 조금 받는다. */
+  var CEIL = 45000;                                // 미리 싣기 천장(ms)
+  var ASSETS = [
+    { k: 'day2night',   u: film('day2night', 6) },
+    { k: 'night2day',   u: film('night2day', 6) },
+    { k: 'fireflies',   u: film('fireflies', 3) },
+    { k: 'bowl_night',  u: film('bowl_night', 4) },
+    { k: 'bowl_day',    u: film('bowl_day', 4) },
+    { k: 'still_day',   u: BASE + 'still_day.jpg?v=1' },
+    { k: 'still_night', u: BASE + 'still_night.jpg?v=1' },
+    { k: 'tick',        u: BASE + 'hover.mp3?v=1', raw: true },
+  ];
+  var byKey = {};
+  ASSETS.forEach(function (a) { a.got = 0; a.total = 0; byKey[a.k] = a; });
 
-  /* ── 전부 처음부터 — 볼 패치도, 똑딱 소리도 방이 열리는 동안 함께 실린다.
-     이제 패치 두 장(30~55KB)·똑딱(7.5KB) 다 이 크기라 방 필름과 경합할 무게가 아니다.
-     호버든 첫 종이든, 실제로 쓰일 때는 이미 다 실려 있어 기다릴 일이 없다 ── */
-  loadPatches();
-  loadTick();
+  var MIME = { mp4: 'video/mp4', jpg: 'image/jpeg', mp3: 'audio/mpeg' };
+  function mimeOf(u) {
+    return MIME[u.replace(/\?.*$/, '').split('.').pop()] || 'application/octet-stream';
+  }
+
+  /* 로더가 듣는 신호 — 진짜 바이트 비율. Content-Length 를 못 받은 것이 하나라도
+     있으면 비율이 거짓말을 하므로 그때는 받아 낸 개수로 센다 */
+  function report() {
+    var got = 0, total = 0, known = 0, done = 0;
+    ASSETS.forEach(function (a) {
+      got += a.got;
+      if (a.total) { total += a.total; known++; }
+      if (a.done) done++;
+    });
+    var p = (known === ASSETS.length && total) ? got / total : done / ASSETS.length;
+    p = Math.max(0, Math.min(1, p));
+    document.documentElement.dataset.amProgress = p.toFixed(3);
+    try { window.dispatchEvent(new CustomEvent('am-progress', { detail: p })); } catch (e) {}
+  }
+
+  function grab(a) {
+    return fetch(a.u).then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      a.total = +(r.headers.get('content-length') || 0);
+      if (!r.body || !r.body.getReader) return r.arrayBuffer();   // 스트림을 못 여는 브라우저
+      var reader = r.body.getReader(), parts = [], n = 0;
+      return (function pump() {
+        return reader.read().then(function (s) {
+          if (s.done) {
+            var out = new Uint8Array(n), at = 0;
+            parts.forEach(function (c) { out.set(c, at); at += c.length; });
+            return out.buffer;
+          }
+          parts.push(s.value); n += s.value.length;
+          a.got = n; report();
+          return pump();
+        });
+      })();
+    }).then(function (buf) {
+      a.buf = buf;
+      a.got = a.total = buf.byteLength;
+      if (!a.raw) a.url = URL.createObjectURL(new Blob([buf], { type: mimeOf(a.u) }));
+    })['catch'](function () {})                    // 못 받은 하나가 방문을 막지는 않는다
+      .then(function () { a.done = true; report(); });
+  }
+
+  function srcOf(k) { var a = byKey[k]; return (a && (a.url || a.u)) || ''; }
+
+  /* 받아 둔 것을 물린다 — 여기서부터 방은 제 몸을 다 갖고 있다 */
+  function attach() {
+    fwd.src = srcOf('day2night');
+    rev.src = srcOf('night2day');
+    ff.src = srcOf('fireflies');
+    bowlN.src = srcOf('bowl_night');
+    bowlD.src = srcOf('bowl_day');
+    fwd.setAttribute('poster', srcOf('still_' + themeName()));
+    tickRaw = byKey.tick.buf || null;               // 똑딱은 디코드만 남았다
+    tickDecode();
+    [fwd, rev, ff, bowlN, bowlD].forEach(function (v) { v.load(); });
+    /* 발길질 — DOM 에 다 붙은 뒤라야 안전하다(iOS 에서 검증된 자리).
+       blob 이라 데이터를 부르러 가는 게 아니라 디코더를 깨우는 뜻이다 */
+    kick(fwd); kick(rev); kick(ff);
+    loadPatches();
+  }
+
+  /* 받은 것이 실제로 디코드까지 되었는가 — 첫 프레임이 서 있어야 문을 연다.
+     blob 이라 곧 오지만, 기기가 필름을 거절하면(저전력 모드 등) error 로 답이 오고
+     그때는 정지 화면이 방을 대신 세운다 */
+  function decoded(v) { return v.readyState >= 2 || !!v.error; }
+  function openWhenDecoded(t0) {
+    if ([fwd, rev, ff, bowlN, bowlD].every(decoded) || Date.now() - t0 > 8000) { firstFrame(); return; }
+    setTimeout(function () { openWhenDecoded(t0); }, 60);
+  }
+
+  var opened = false;
+  function openRoom() {
+    if (opened) return;
+    opened = true;
+    attach();
+    openWhenDecoded(Date.now());
+  }
+  fwd.addEventListener('error', fireReady);       // 필름이 없어도 방문은 이어진다 — 마당색 위에서
+  setTimeout(openRoom, CEIL);                     // 천장 — 회선이 어떻든 방은 열린다
+  Promise.all(ASSETS.map(grab)).then(openRoom);
+  report();
 
   /* ── session.js가 빌리는 몸 — 3D 시절과 같은 이름들 ── */
   window.__am = {
