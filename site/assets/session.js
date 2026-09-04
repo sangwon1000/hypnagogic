@@ -145,7 +145,6 @@
     '</div>' +
     '<div class="s3-nav">' +
       '<button type="button" class="s3-chip s3-navlog" aria-pressed="false">log</button>' +
-      '<button type="button" class="s3-chip s3-navsound" aria-pressed="false">sound</button>' +
     '</div>' +
     '<div class="s3-tip" hidden></div>';
   document.body.appendChild(root);
@@ -158,7 +157,7 @@
   var titleEl = $('.s3c-title'), subEl = $('.s3c-sub');
   var monthsEl = $('.s3c-months'), gridEl = $('.s3c-grid'), listEl = $('.s3c-list');
   var cTime = $('.s3c-c-time'), cN = $('.cn'), cT = $('.ct'), cS = $('.cs');
-  var logChip = $('.s3-navlog'), soundChip = $('.s3-navsound');
+  var logChip = $('.s3-navlog');
   var tip = $('.s3-tip');
 
   /* 다른 기기 기록이 동기화로 내려오면(auth.js) 열려 있는 히트맵을 새로 그린다 */
@@ -554,7 +553,6 @@
   $('.s3c-again').addEventListener('click', function () { S.phase = 'idle'; begin(); });
   $('.s3c-back').addEventListener('click', backToRoom);
   logChip.addEventListener('click', openLog);
-  soundChip.addEventListener('click', function () { var A = am(); if (A) A.musicToggle(); });
   root.querySelectorAll('.s3c-range .s3-chip').forEach(function (b) {
     b.addEventListener('click', function () {
       S.range = b.dataset.range;
@@ -572,12 +570,12 @@
     else if (document.body.dataset.s3 === 'pick') setView('room');
   });
 
-  /* 전축 상태 → sound 칩과 3b 알약 (1초 결이면 충분하다) */
+  /* 전축 상태 → 3b 알약 (1초 결이면 충분하다). 윗줄의 sound 칩은 걷어냈다 —
+     전축은 방 안의 물건으로만 켠다, 물건마다 기능 하나씩이라는 규칙대로 */
   pollIv = setInterval(function () {
     var A = am();
     var m = A && A.music();
     var on = !!(m && m.on);
-    soundChip.setAttribute('aria-pressed', on ? 'true' : 'false');
     if (document.body.dataset.s3 === 'sitting') {
       if (on && m.title) {
         npTitle.textContent = trunc(m.title, 30);
